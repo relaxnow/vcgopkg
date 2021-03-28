@@ -25,14 +25,28 @@ func main() {
 		return
 	}
 
+	// TODO: work recursive
 	if dirOrFileStat.IsDir() {
 		log.Printf("'%s' input is dir", dirOrFile)
-		parsedPackage, err := parser.ParseDir(token.NewFileSet(), dirOrFile, nil, parser.ParseComments)
+		parsedPackage, err := parser.ParseDir(
+			token.NewFileSet(),
+			dirOrFile,
+			nil,
+			parser.ParseComments,
+		)
 
 		if err != nil {
 			panic(err)
 		}
-		spew.Dump(parsedPackage)
+
+		featureFiles := FeatureFiles{}
+		for _, pkg := range parsedPackage {
+			featureFiles.detectFromPackage(ParsedPackage{
+				Package:  pkg,
+				FilePath: dirOrFile,
+			})
+		}
+		spew.Dump(featureFiles)
 
 	} else if dirOrFileStat.Mode().Perm().IsRegular() {
 		log.Printf("'%s' input is a file", dirOrFile)
@@ -42,12 +56,9 @@ func main() {
 			panic(err)
 		}
 
-		for _, decl := range parsedFile.Decls {
-			if ast.FilterDecl(decl, func(name string) bool { return name == "main" }) {
-				log.Println("Found main!")
-				spew.Dump(decl)
-			}
-		}
+		featureFiles := FeatureFiles{}
+		featureFiles.detectFromFile(ParsedFile{File: parsedFile, FilePath: dirOrFile})
+		spew.Dump(featureFiles)
 	} else {
 		log.Printf("'%s' does not exist", dirOrFile)
 		os.Exit(1)
@@ -129,15 +140,41 @@ func main() {
 // 	// return true
 // }
 
-// type FeatureFiles struct {
-// 	MainFiles      []ast.File
-// 	CFiles         []ast.File
-// 	mainFiles      []ast.File
-// 	importFiles    []ast.File
-// 	BuildFiles     []ast.File
-// 	OSFiles        []ast.File
-// 	FrameworkFiles FrameworkFiles
-// }
+type FeatureFiles struct {
+	MainFiles []ParsedFile
+	// CFiles         []ast.File
+	// importFiles    []ast.File
+	// BuildFiles     []ast.File
+	// OSFiles        []ast.File
+	// FrameworkFiles FrameworkFiles
+}
+
+type ParsedFile struct {
+	File     *ast.File
+	FilePath string
+}
+
+type ParsedPackage struct {
+	Package  *ast.Package
+	FilePath string
+}
+
+func (f *FeatureFiles) detectFromFile(parsedFile ParsedFile) {
+	for _, decl := range parsedFile.File.Decls {
+		if ast.FilterDecl(decl, func(name string) bool { return name == "main" }) {
+			f.MainFiles = append(f.MainFiles, parsedFile)
+		}
+	}
+}
+
+func (f FeatureFiles) detectFromPackage(pkg ParsedPackage) {
+	for _, file := range pkg.Package.Files {
+		f.detectFromFile(ParsedFile{
+			File:     file,
+			FilePath: pkg.FilePath + "/" + file.Name.Name,
+		})
+	}
+}
 
 // type FrameworkFiles struct {
 // 	RevelFiles    []ast.File
