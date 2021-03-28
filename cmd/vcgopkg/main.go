@@ -3,8 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"log"
 	"os"
+
+	"github.com/davecgh/go-spew/spew"
+	// "golang.org/x/mod/modfile"
 )
 
 func main() {
@@ -21,34 +27,35 @@ func main() {
 
 	if dirOrFileStat.IsDir() {
 		log.Printf("'%s' input is dir", dirOrFile)
+		parsedPackage, err := parser.ParseDir(token.NewFileSet(), dirOrFile, nil, parser.ParseComments)
+
+		if err != nil {
+			panic(err)
+		}
+		spew.Dump(parsedPackage)
+
 	} else if dirOrFileStat.Mode().Perm().IsRegular() {
 		log.Printf("'%s' input is a file", dirOrFile)
+		parsedFile, err := parser.ParseFile(token.NewFileSet(), dirOrFile, nil, parser.ParseComments)
+
+		if err != nil {
+			panic(err)
+		}
+
+		for _, decl := range parsedFile.Decls {
+			if ast.FilterDecl(decl, func(name string) bool { return name == "main" }) {
+				log.Println("Found main!")
+				spew.Dump(decl)
+			}
+		}
 	} else {
 		log.Printf("'%s' does not exist", dirOrFile)
+		os.Exit(1)
 	}
 
 	log.Print("Reading go files in: " + dirOrFile)
 
-	// Find all go files, foreach go file get:
-	//	  main
-	//    import "C"  jyjy
-	//    Build tags
-	//    OS specific features
-	//    Framework import
-	//       Revel
-	//		 Gin
-	//       Martini
-	//       Web.Go
-	//       Gorilla
-	//       Goji
-	//       Goa
-	//       Beego
-	//       Buffalo
-	//       kit
-	//       echo
-	//       kit
-	//       fasthttp
-	//       govwa
+	// Find all go files, foreach go file get FeatureFiles
 	// If no main funcs, error out
 
 	// Foreach main funcs
@@ -88,32 +95,62 @@ func main() {
 	//
 }
 
-func isWorkspaceModeWithGoEnv(path) {
-	// if !GOPATH
-	//    loadEnvFromGoEnv()
-	// return isWorkspaceMode(path)
-}
+// func hasGoMod(path) {
+// 	mod, err := modfile.Parse(path)
+// }
 
-func isWorkspaceMode(path) {
-	// workspaceRoot := getWorkspaceRoot()
-	// if workspaceRoot == nil {
-	//    return false
-	// }
-	// return path.startsWith(path)
-}
+// func isWorkspaceModeWithGoEnv(path) {
+// 	// if !GOPATH
+// 	//    loadEnvFromGoEnv()
+// 	// return isWorkspaceMode(path)
+// }
 
-func getWorkspaceRoot() {
-	// if isWorkspace(GOPATH)
-	//   return GOPATH
-	// if isWorkspace(GOROOT)
-	//    return GOROOT
-	// return nil
-}
+// func isWorkspaceMode(path) {
+// 	// workspaceRoot := getWorkspaceRoot()
+// 	// if workspaceRoot == nil {
+// 	//    return false
+// 	// }
+// 	// return path.startsWith(path)
+// }
 
-func isWorkspace(path) {
-	// if !path.Stat().isDir()
-	//   return false
-	// if !path + '/src'.isDir()
-	//   return false
-	// return true
-}
+// func getWorkspaceRoot() {
+// 	// if isWorkspace(GOPATH)
+// 	//   return GOPATH
+// 	// if isWorkspace(GOROOT)
+// 	//    return GOROOT
+// 	// return nil
+// }
+
+// func isWorkspace(path) {
+// 	// if !path.Stat().isDir()
+// 	//   return false
+// 	// if !path + '/src'.isDir()
+// 	//   return false
+// 	// return true
+// }
+
+// type FeatureFiles struct {
+// 	MainFiles      []ast.File
+// 	CFiles         []ast.File
+// 	mainFiles      []ast.File
+// 	importFiles    []ast.File
+// 	BuildFiles     []ast.File
+// 	OSFiles        []ast.File
+// 	FrameworkFiles FrameworkFiles
+// }
+
+// type FrameworkFiles struct {
+// 	RevelFiles    []ast.File
+// 	GinFiles      []ast.File
+// 	MartiniFiles  []ast.File
+// 	GoWebFiles    []ast.File
+// 	GorillaFiles  []ast.File
+// 	GojiFiles     []ast.File
+// 	GoaFiles      []ast.File
+// 	BeegoFiles    []ast.File
+// 	BuffaloFiles  []ast.File
+// 	kitFiles      []ast.File
+// 	echoFiles     []ast.File
+// 	fasthttpFiles []ast.File
+// 	govwaFiles    []ast.File
+// }
