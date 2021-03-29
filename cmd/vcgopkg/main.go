@@ -8,6 +8,7 @@ import (
 	"go/token"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/davecgh/go-spew/spew"
 	// "golang.org/x/mod/modfile"
@@ -28,23 +29,37 @@ func main() {
 	// TODO: work recursive
 	if dirOrFileStat.IsDir() {
 		log.Printf("'%s' input is dir", dirOrFile)
-		parsedPackage, err := parser.ParseDir(
-			token.NewFileSet(),
-			dirOrFile,
-			nil,
-			parser.ParseComments,
-		)
-
-		if err != nil {
-			panic(err)
-		}
-
 		featureFiles := FeatureFiles{}
-		for _, pkg := range parsedPackage {
-			featureFiles.detectFromPackage(ParsedPackage{
-				Package:  pkg,
-				FilePath: dirOrFile,
+		err := filepath.Walk(dirOrFile,
+			func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				if !info.IsDir() {
+					return nil
+				}
+
+				parsedPackage, err := parser.ParseDir(
+					token.NewFileSet(),
+					path,
+					nil,
+					parser.ParseComments,
+				)
+
+				if err != nil {
+					panic(err)
+				}
+
+				for _, pkg := range parsedPackage {
+					featureFiles.detectFromPackage(ParsedPackage{
+						Package:  pkg,
+						FilePath: path,
+					})
+				}
+				return nil
 			})
+		if err != nil {
+			log.Println(err)
 		}
 		spew.Dump(featureFiles)
 
@@ -167,11 +182,11 @@ func (f *FeatureFiles) detectFromFile(parsedFile ParsedFile) {
 	}
 }
 
-func (f FeatureFiles) detectFromPackage(pkg ParsedPackage) {
+func (f *FeatureFiles) detectFromPackage(pkg ParsedPackage) {
 	for _, file := range pkg.Package.Files {
 		f.detectFromFile(ParsedFile{
 			File:     file,
-			FilePath: pkg.FilePath + "/" + file.Name.Name,
+			FilePath: pkg.FilePath + "/" + file.Name.Name + ".go",
 		})
 	}
 }
