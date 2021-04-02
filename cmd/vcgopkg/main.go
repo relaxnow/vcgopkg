@@ -3,12 +3,18 @@ package main
 import (
 	"flag"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
+	"path"
+	"path/filepath"
 
-	"github.com/relaxnow/vcgopkg/files"
-	"github.com/relaxnow/vcgopkg/program"
-	// "golang.org/x/mod/modfile"
+	"github.com/davecgh/go-spew/spew"
+	"github.com/otiai10/copy"
 )
 
 func main() {
@@ -25,56 +31,124 @@ func main() {
 
 	log.Print("Reading go files in: " + inputPath)
 
-	featureFiles := files.FeatureFiles{}
-	featureFiles.DetectFromPath(inputPathStat)
+	mainFiles := []string{}
+	if inputPathStat.IsDir() {
+		log.Printf("'%s' input is dir", inputPath)
+		err := filepath.Walk(inputPath,
+			func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				if !info.IsDir() {
+					return nil
+				}
 
-	if len(featureFiles.MainFiles) == 0 {
-		panic("No main files found")
+				parsedPackages, err := parser.ParseDir(
+					token.NewFileSet(),
+					path,
+					nil,
+					parser.ParseComments,
+				)
+
+				if err != nil {
+					panic(err)
+				}
+
+				for _, pkg := range parsedPackages {
+					for _, file := range pkg.Files {
+						for _, decl := range file.Decls {
+							if ast.FilterDecl(decl, func(name string) bool { return name == "main" }) {
+								mainFiles = append(mainFiles, path+"/"+file.Name.Name+".go")
+							}
+						}
+					}
+				}
+				return nil
+			})
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else if inputPathStat.Mode().Perm().IsRegular() {
+		log.Printf("'%s' input is a file", inputPath)
+		parsedFile, err := parser.ParseFile(token.NewFileSet(), inputPath, nil, parser.ParseComments)
+
+		if err != nil {
+			panic(err)
+		}
+
+		for _, decl := range parsedFile.Decls {
+			if ast.FilterDecl(decl, func(name string) bool { return name == "main" }) {
+				mainFiles = append(mainFiles, inputPath)
+			}
+		}
+	} else {
+		log.Fatalf("'%s' does not exist", inputPath)
+		os.Exit(1)
 	}
-
-	for _, mainFile := range featureFiles.MainFiles {
-		program := program.GetProgramFromMainFilePath(mainFile.FilePath)
-		tempProgram := program.CopyToTempDir()
-		err := tempProgram.Vendor()
-		tempProgram.Zip()
+	if len(mainFiles) == 0 {
+		log.Fatalf("No main files found in %s", inputPath)
 	}
+	spew.Dump(mainFiles)
 
-	// Find all go files, foreach go file get FeatureFiles
-	// If no main funcs, error out
+	for _, mainFile := range mainFiles {
+		goModPath := ""
+		parentDir := path.Dir(mainFile)
+		for {
+			goModStat, _ := os.Stat(parentDir + "/go.mod")
 
-	// Foreach main funcs
-	//    Get repo root
-	//        copy
-	//        vendor deps
-	//
+			if goModStat == nil {
+				if parentDir != "" {
+					parentDir = path.Dir(parentDir)
+					continue
+				} else {
+					break
+				}
+			}
 
-	// Testcases:
-	//   Go multi repo: https://github.com/flowerinthenight/golang-monorepo
-	//   GOROOT: https://golang.org/doc/gopath_code
-	//   Bazel
-	//   Broken code
-	//   Missing imports
-	//	 Windows machine without go installed
+			goModPath = parentDir + "/go.mod"
+			break
+		}
 
-	// if root
-	//  copy program to temp dir
-	//  vendor / go mod vendor
-	// else if isWorkspaceModeWithGoEnv(path) {
-	//	get all .go files from program
-	//  Find all imports
-	//  find program root by looking for shortest import that overlaps with cwd
-	//  copy program to temp dir
-	//  vendor all imports
-	// } else if mod := hasGoMod(path) {
-	//  copy module to temp dir
-	//	go mod vendor
-	// } else {
-	//	 error
-	// }
-	//
-	//
-	//
-	//
-	//
-	//
+		println(goModPath)
+		tempWorkDir, err := os.MkdirTemp("", "vcgopkg")
+		println(tempWorkDir)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer os.RemoveAll(tempWorkDir) // clean up
+
+		copyDir := tempWorkDir + "/" + filepath.Base(filepath.Dir(goModPath))
+		copy.Copy(parentDir, copyDir)
+
+		cmd := exec.Command("ls", "-lah", copyDir)
+		cmdOut, _ := cmd.Output()
+		println(string(cmdOut))
+
+		cmd = exec.Command("go", "mod", "vendor")
+		cmd.Dir = copyDir
+		cmdOut, _ = cmd.Output()
+		println(string(cmdOut))
+
+		json := []byte("{\"MainFile\": \"cmd/go-detailedreport-to-csv\"}")
+		ioutil.WriteFile(copyDir+"/veracode.json", json, 0644)
+
+		baseDir := filepath.Base(filepath.Dir(goModPath))
+		cmd = exec.Command("zip", "-r", baseDir+".zip", baseDir)
+		cmd.Dir = tempWorkDir
+		cmdOut, _ = cmd.Output()
+		println(string(cmdOut))
+
+		veracodeDir := parentDir + "/veracode"
+		os.Mkdir(veracodeDir, 0777)
+
+		cmd = exec.Command("mv", baseDir+".zip", veracodeDir)
+		cmd.Dir = tempWorkDir
+		cmdOut, _ = cmd.Output()
+		println(baseDir + ".zip")
+		println(string(cmdOut))
+
+		cmd = exec.Command("ls", "-lah", tempWorkDir)
+		cmdOut, _ = cmd.Output()
+		println(string(cmdOut))
+	}
 }

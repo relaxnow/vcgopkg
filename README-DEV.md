@@ -10,3 +10,11 @@ Guiding philosophy of vcgopkg is to:
 * vcgopkg.log.json ?
 * Git commit?
 
+# Testcases:
+
+* Go multi repo: https://github.com/flowerinthenight/golang-monorepo
+* GOROOT: https://golang.org/doc/gopath_code
+* Bazel
+* Broken code
+* Missing imports
+* Windows machine without go installed
