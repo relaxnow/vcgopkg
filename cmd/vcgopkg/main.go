@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/otiai10/copy"
@@ -133,7 +134,8 @@ func main() {
 		ioutil.WriteFile(copyDir+"/veracode.json", json, 0644)
 
 		baseDir := filepath.Base(filepath.Dir(goModPath))
-		cmd = exec.Command("zip", "-r", baseDir+".zip", baseDir)
+		zipFile := baseDir + time.Now().Format("-20060102150405") + ".zip"
+		cmd = exec.Command("zip", "-r", zipFile, baseDir)
 		cmd.Dir = tempWorkDir
 		cmdOut, _ = cmd.Output()
 		println(string(cmdOut))
@@ -141,7 +143,7 @@ func main() {
 		veracodeDir := parentDir + "/veracode"
 		os.Mkdir(veracodeDir, 0777)
 
-		cmd = exec.Command("mv", baseDir+".zip", veracodeDir)
+		cmd = exec.Command("mv", zipFile, veracodeDir)
 		cmd.Dir = tempWorkDir
 		cmdOut, _ = cmd.Output()
 		println(baseDir + ".zip")
