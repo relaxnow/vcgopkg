@@ -24,19 +24,26 @@ func main() {
 	inputPath := flag.Arg(0)
 	fmt.Println(inputPath)
 
-	inputPathStat, err := os.Stat(inputPath)
+	absPath, err := filepath.Abs(inputPath)
 	if err != nil {
-		log.Printf("Error getting stat for '%s'. File or path may not exist? Original error: '%s'", inputPath, err)
+		log.Printf("Error getting absolute path for '%s'. File or path may not exist? Original error: '%s'", inputPath, err)
 		os.Exit(1)
 		return
 	}
 
-	log.Print("Reading go files in: " + inputPath)
+	absPathStat, err := os.Stat(absPath)
+	if err != nil {
+		log.Printf("Error getting stat for '%s'. File or path may not exist? Original error: '%s'", absPath, err)
+		os.Exit(1)
+		return
+	}
+
+	log.Print("Reading go files in: " + absPath)
 
 	mainFiles := []string{}
-	if inputPathStat.IsDir() {
-		log.Printf("'%s' input is dir", inputPath)
-		err := filepath.Walk(inputPath,
+	if absPathStat.IsDir() {
+		log.Printf("'%s' input is dir", absPath)
+		err := filepath.Walk(absPath,
 			func(path string, info os.FileInfo, err error) error {
 				if err != nil {
 					return err
@@ -70,9 +77,9 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-	} else if inputPathStat.Mode().Perm().IsRegular() {
-		log.Printf("'%s' input is a file", inputPath)
-		parsedFile, err := parser.ParseFile(token.NewFileSet(), inputPath, nil, parser.ParseComments)
+	} else if absPathStat.Mode().Perm().IsRegular() {
+		log.Printf("'%s' input is a file", absPath)
+		parsedFile, err := parser.ParseFile(token.NewFileSet(), absPath, nil, parser.ParseComments)
 
 		if err != nil {
 			panic(err)
@@ -80,14 +87,14 @@ func main() {
 
 		for _, decl := range parsedFile.Decls {
 			if ast.FilterDecl(decl, func(name string) bool { return name == "main" }) {
-				mainFiles = append(mainFiles, inputPath)
+				mainFiles = append(mainFiles, absPath)
 			}
 		}
 	} else {
-		log.Fatalf("'%s' does not exist", inputPath)
+		log.Fatalf("'%s' does not exist", absPath)
 	}
 	if len(mainFiles) == 0 {
-		log.Fatalf("No main files found in %s", inputPath)
+		log.Fatalf("No main files found in %s", absPath)
 	}
 	spew.Dump(mainFiles)
 
@@ -149,7 +156,7 @@ func main() {
 		cmd = exec.Command("mv", zipFile, veracodeDir)
 		cmd.Dir = tempWorkDir
 		cmdOut, _ = cmd.Output()
-		println(baseDir + ".zip")
+		println("mv " + zipFile + " " + veracodeDir)
 		println(string(cmdOut))
 
 		// DEBUG
