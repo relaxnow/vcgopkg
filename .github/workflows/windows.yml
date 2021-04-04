@@ -25,4 +25,4 @@ jobs:
       run: go test -v ./...
 
     - name: Functional tests
-      run: tests\test.ps1
+      run: test\test.ps1
