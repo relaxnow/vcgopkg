@@ -40,6 +40,16 @@ func main() {
 
 	log.Print("Reading go files in: " + absPath)
 
+	mainFiles := getMainFiles(absPathStat, absPath)
+
+	spew.Dump(mainFiles)
+
+	for _, mainFile := range mainFiles {
+		packageMainFile(mainFile)
+	}
+}
+
+func getMainFiles(absPathStat os.FileInfo, absPath string) []string {
 	mainFiles := []string{}
 	if absPathStat.IsDir() {
 		log.Printf("'%s' input is dir", absPath)
@@ -96,73 +106,73 @@ func main() {
 	if len(mainFiles) == 0 {
 		log.Fatalf("No main files found in %s", absPath)
 	}
-	spew.Dump(mainFiles)
+	return mainFiles
+}
 
-	for _, mainFile := range mainFiles {
-		goModPath := ""
-		parentDir := path.Dir(mainFile)
-		for {
-			goModStat, _ := os.Stat(parentDir + "/go.mod")
+func packageMainFile(mainFile string) {
+	goModPath := ""
+	parentDir := path.Dir(mainFile)
+	for {
+		goModStat, _ := os.Stat(parentDir + "/go.mod")
 
-			if goModStat == nil {
-				if parentDir != "" {
-					parentDir = path.Dir(parentDir)
-					continue
-				} else {
-					break
-				}
+		if goModStat == nil {
+			if parentDir != "" {
+				parentDir = path.Dir(parentDir)
+				continue
+			} else {
+				break
 			}
-
-			goModPath = parentDir + "/go.mod"
-			break
 		}
 
-		println(goModPath)
-		tempWorkDir, err := os.MkdirTemp("", "vcgopkg")
-		println(tempWorkDir)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer os.RemoveAll(tempWorkDir)
-
-		copyDir := tempWorkDir + "/" + filepath.Base(filepath.Dir(goModPath))
-		copy.Copy(parentDir, copyDir)
-
-		// DEBUG
-		cmd := exec.Command("ls", "-lah", copyDir)
-		cmdOut, _ := cmd.Output()
-		println(string(cmdOut))
-		// DEBUG
-
-		cmd = exec.Command("go", "mod", "vendor")
-		cmd.Dir = copyDir
-		cmdOut, _ = cmd.Output()
-		println(string(cmdOut))
-
-		mainFileRelativePath := strings.TrimPrefix(path.Base(mainFile), parentDir)
-		json := []byte(fmt.Sprintf("{\"MainFile\": \"%s\"}", mainFileRelativePath))
-		ioutil.WriteFile(copyDir+"/veracode.json", json, 0644)
-
-		baseDir := filepath.Base(filepath.Dir(goModPath))
-		zipFile := baseDir + time.Now().Format("-20060102150405") + ".zip"
-		cmd = exec.Command("zip", "-r", zipFile, baseDir)
-		cmd.Dir = tempWorkDir
-		cmdOut, _ = cmd.Output()
-		println(string(cmdOut))
-
-		veracodeDir := parentDir + "/veracode"
-		os.Mkdir(veracodeDir, 0700)
-
-		cmd = exec.Command("mv", zipFile, veracodeDir)
-		cmd.Dir = tempWorkDir
-		cmdOut, _ = cmd.Output()
-		println("mv " + zipFile + " " + veracodeDir)
-		println(string(cmdOut))
-
-		// DEBUG
-		cmd = exec.Command("ls", "-lah", tempWorkDir)
-		cmdOut, _ = cmd.Output()
-		println(string(cmdOut))
-		// DEBUG
+		goModPath = parentDir + "/go.mod"
+		break
 	}
+
+	println(goModPath)
+	tempWorkDir, err := os.MkdirTemp("", "vcgopkg")
+	println(tempWorkDir)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(tempWorkDir)
+
+	copyDir := tempWorkDir + "/" + filepath.Base(filepath.Dir(goModPath))
+	copy.Copy(parentDir, copyDir)
+
+	// DEBUG
+	cmd := exec.Command("ls", "-lah", copyDir)
+	cmdOut, _ := cmd.Output()
+	println(string(cmdOut))
+	// DEBUG
+
+	cmd = exec.Command("go", "mod", "vendor")
+	cmd.Dir = copyDir
+	cmdOut, _ = cmd.Output()
+	println(string(cmdOut))
+
+	mainFileRelativePath := strings.TrimPrefix(path.Base(mainFile), parentDir)
+	json := []byte(fmt.Sprintf("{\"MainFile\": \"%s\"}", mainFileRelativePath))
+	ioutil.WriteFile(copyDir+"/veracode.json", json, 0644)
+
+	baseDir := filepath.Base(filepath.Dir(goModPath))
+	zipFile := baseDir + time.Now().Format("-20060102150405") + ".zip"
+	cmd = exec.Command("zip", "-r", zipFile, baseDir)
+	cmd.Dir = tempWorkDir
+	cmdOut, _ = cmd.Output()
+	println(string(cmdOut))
+
+	veracodeDir := parentDir + "/veracode"
+	os.Mkdir(veracodeDir, 0700)
+
+	cmd = exec.Command("mv", zipFile, veracodeDir)
+	cmd.Dir = tempWorkDir
+	cmdOut, _ = cmd.Output()
+	println("mv " + zipFile + " " + veracodeDir)
+	println(string(cmdOut))
+
+	// DEBUG
+	cmd = exec.Command("ls", "-lah", tempWorkDir)
+	cmdOut, _ = cmd.Output()
+	println(string(cmdOut))
+	// DEBUG
 }
