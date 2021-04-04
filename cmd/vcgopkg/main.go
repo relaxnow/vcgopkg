@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
@@ -84,7 +85,6 @@ func main() {
 		}
 	} else {
 		log.Fatalf("'%s' does not exist", inputPath)
-		os.Exit(1)
 	}
 	if len(mainFiles) == 0 {
 		log.Fatalf("No main files found in %s", inputPath)
@@ -116,21 +116,24 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		defer os.RemoveAll(tempWorkDir) // clean up
+		defer os.RemoveAll(tempWorkDir)
 
 		copyDir := tempWorkDir + "/" + filepath.Base(filepath.Dir(goModPath))
 		copy.Copy(parentDir, copyDir)
 
+		// DEBUG
 		cmd := exec.Command("ls", "-lah", copyDir)
 		cmdOut, _ := cmd.Output()
 		println(string(cmdOut))
+		// DEBUG
 
 		cmd = exec.Command("go", "mod", "vendor")
 		cmd.Dir = copyDir
 		cmdOut, _ = cmd.Output()
 		println(string(cmdOut))
 
-		json := []byte("{\"MainFile\": \"cmd/go-detailedreport-to-csv\"}")
+		mainFileRelativePath := strings.TrimPrefix(path.Base(mainFile), parentDir)
+		json := []byte(fmt.Sprintf("{\"MainFile\": \"%s\"}", mainFileRelativePath))
 		ioutil.WriteFile(copyDir+"/veracode.json", json, 0644)
 
 		baseDir := filepath.Base(filepath.Dir(goModPath))
@@ -141,7 +144,7 @@ func main() {
 		println(string(cmdOut))
 
 		veracodeDir := parentDir + "/veracode"
-		os.Mkdir(veracodeDir, 0777)
+		os.Mkdir(veracodeDir, 0700)
 
 		cmd = exec.Command("mv", zipFile, veracodeDir)
 		cmd.Dir = tempWorkDir
@@ -149,8 +152,10 @@ func main() {
 		println(baseDir + ".zip")
 		println(string(cmdOut))
 
+		// DEBUG
 		cmd = exec.Command("ls", "-lah", tempWorkDir)
 		cmdOut, _ = cmd.Output()
 		println(string(cmdOut))
+		// DEBUG
 	}
 }
