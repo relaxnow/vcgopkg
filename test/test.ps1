@@ -1,1 +1,1 @@
-Invoke-Expression "$PSScriptRoot\go-detailed-report\test.ps1"
+Invoke-Expression "$PSScriptRoot\go-detailedreport-to-csv\test.ps1"
