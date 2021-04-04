@@ -1,0 +1,1 @@
+Invoke-Expression "$PSScriptRoot\go-detailed-report\test.ps1"
