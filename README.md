@@ -33,6 +33,7 @@ This can then be uploaded to Veracode for Static Analysis.
 * Plugins
 * OS specific features
 * Frameworks
+* Multi-module
 
 ### Multi-main
 ### veracode.json generation
