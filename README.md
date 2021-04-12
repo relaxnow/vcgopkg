@@ -1,5 +1,5 @@
 # vcgopkg
-Package a Go application for Veracode Static Analysis
+Unofficial Community Project to help package a Go application for Veracode Static Analysis
 
 ## Usage
 
