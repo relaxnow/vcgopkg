@@ -216,7 +216,11 @@ func pkg(goModPath string, tempWorkDir string, parentDir string, packageDate str
 	os.Mkdir(veracodeDir, 0700)
 	log.WithField("veracodeDir", veracodeDir).Debug("Created veracode dir for binaries")
 
-	os.Rename(tempWorkDir+"/"+zipFile, veracodeDir+"/"+zipFile)
+	err := os.Rename(tempWorkDir+"/"+zipFile, veracodeDir+"/"+zipFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	log.WithFields(log.Fields{
 		"from": tempWorkDir + "/" + zipFile,
 		"to":   veracodeDir + "/" + zipFile,
