@@ -1,6 +1,6 @@
 Remove-Item "$PSScriptRoot\temp" -Recurse -ErrorAction Ignore
 Copy-Item -Path "$PSScriptRoot\input" -Destination "$PSScriptRoot\temp" -Recurse
-& "$PSScriptRoot\..\..\vcgopkg.exe" $PSScriptRoot\temp 20060102150405
+& "$PSScriptRoot\..\..\vcgopkg.exe" "$PSScriptRoot\temp" "-20060102150405"
 
 Move-Item -Path $PSScriptRoot\temp -Destination $PSScriptRoot\test
 $fsTemp  = Get-ChildItem -Recurse -path $PSScriptRoot\test
