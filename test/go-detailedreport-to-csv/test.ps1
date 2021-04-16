@@ -16,8 +16,10 @@ Move-Item -Path $PSScriptRoot\output -Destination $PSScriptRoot\test
 $fsOutput = Get-ChildItem -Recurse -path $PSScriptRoot\test
 Move-Item -Path $PSScriptRoot\test -Destination $PSScriptRoot\output
 
+$fsTemp
+$fsOutput
 Compare-Object -ReferenceObject $fsOutput -DifferenceObject $fsTemp
-$c = Compare-Object -ReferenceObject $fsOutput -DifferenceObject $fsTemp
+$c = Compare-Object -ReferenceObject $fsOutput -DifferenceObject $fsOutput
 
 if( $LASTEXITCODE -eq 0 ) {
 	Write-Output "Compare exited successfully"
