@@ -213,9 +213,9 @@ func pkg(goModPath string, tempWorkDir string, parentDir string, packageDate str
 	veracodeDir := parentDir + "/veracode"
 	os.Mkdir(veracodeDir, 0700)
 
-	cmd = exec.Command("mv", zipFile, veracodeDir)
-	cmd.Dir = tempWorkDir
-	cmdOut, _ = cmd.Output()
-	log.Debug("mv " + zipFile + " " + veracodeDir)
-	log.Debug(string(cmdOut))
+	os.Rename(tempWorkDir+"/"+zipFile, veracodeDir+"/"+zipFile)
+	log.WithFields(log.Fields{
+		"from": tempWorkDir + "/" + zipFile,
+		"to":   veracodeDir + "/" + zipFile,
+	}).Debug("Rename zipfile")
 }
