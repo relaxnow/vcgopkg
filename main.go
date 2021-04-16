@@ -180,7 +180,7 @@ func logFiles(dir string, msg string) {
 	}
 
 	log.WithFields(log.Fields{
-		"dir":      "files",
+		"dir":      dir,
 		"fileList": fileList,
 	}).Debug(msg)
 }
