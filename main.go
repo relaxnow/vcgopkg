@@ -129,18 +129,18 @@ func packageMainFile(mainFile string) {
 
 		if goModStat == nil {
 			goModPath = parentDir + "/go.mod"
+			log.WithField("goModPath", goModPath).Debug("Found go.mod path")
 			break
 		}
 		if parentDir != "" {
-			log.WithField("parentDir", parentDir).Debug("Starting looking up for mainFile")
 			parentDir = path.Dir(parentDir)
+			log.WithField("parentDir", parentDir).Debug("Trying parent directory")
 			continue
 		}
 
 		log.Fatal("go.mod not found")
 	}
 
-	log.WithField("goModPath", goModPath).Debug("Found go.mod path")
 	tempWorkDir, err := os.MkdirTemp("", "vcgopkg")
 	log.Debug(tempWorkDir)
 	if err != nil {
