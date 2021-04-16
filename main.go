@@ -1,6 +1,7 @@
 package main
 
 import (
+	"archive/zip"
 	"flag"
 	"fmt"
 	"go/ast"
@@ -206,11 +207,11 @@ func pkg(goModPath string, tempWorkDir string, parentDir string, packageDate str
 		packageDate = time.Now().Format("-20060102150405")
 	}
 	zipFile := baseDir + packageDate + ".zip"
-	log.Debug(tempWorkDir + "# zip -r " + zipFile + " " + baseDir)
-	cmd := exec.Command("zip", "-r", zipFile, baseDir)
-	cmd.Dir = tempWorkDir
-	cmdOut, _ := cmd.Output()
-	log.Debug(string(cmdOut))
+	log.WithFields(log.Fields{
+		"baseDir": baseDir,
+		"zipFile": tempWorkDir + string(filepath.Separator) + zipFile,
+	}).Debug("Writing zip file")
+	ZipWriter(tempWorkDir, tempWorkDir+string(filepath.Separator)+zipFile)
 
 	veracodeDir := parentDir + string(filepath.Separator) + "veracode"
 	os.Mkdir(veracodeDir, 0700)
@@ -225,4 +226,70 @@ func pkg(goModPath string, tempWorkDir string, parentDir string, packageDate str
 		"from": tempWorkDir + string(filepath.Separator) + zipFile,
 		"to":   veracodeDir + string(filepath.Separator) + zipFile,
 	}).Debug("Rename zipfile")
+}
+
+func ZipWriter(baseFolder string, outputZipFile string) {
+	// Get a Buffer to Write To
+	outFile, err := os.Create(outputZipFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer outFile.Close()
+
+	// Create a new zip archive.
+	w := zip.NewWriter(outFile)
+
+	// Add some files to the archive.
+	addFiles(w, baseFolder, "", filepath.Base(outputZipFile))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Make sure to check the error on Close.
+	err = w.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func addFiles(w *zip.Writer, basePath, baseInZip string, ignoreFile string) {
+	// Open the Directory
+	basePath = basePath + string(filepath.Separator)
+	files, err := ioutil.ReadDir(basePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, file := range files {
+		if file.Name() == ignoreFile {
+			continue
+		}
+
+		log.Debug(basePath + file.Name())
+		if !file.IsDir() {
+			dat, err := ioutil.ReadFile(basePath + file.Name())
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// Add some files to the archive.
+			f, err := w.Create(baseInZip + file.Name())
+			if err != nil {
+				log.Fatal(err)
+			}
+			_, err = f.Write(dat)
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else if file.IsDir() {
+
+			// Recurse
+			newBase := basePath + file.Name() + string(filepath.Separator)
+			log.Debug("Recursing and Adding SubDir: " + file.Name())
+			log.Debug("Recursing and Adding SubDir: " + newBase)
+
+			addFiles(w, newBase, baseInZip+file.Name()+string(filepath.Separator), "")
+		}
+	}
 }
