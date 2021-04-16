@@ -164,6 +164,7 @@ func packageMainFile(mainFile string, packageDate string) {
 	pkg(goModPath, tempWorkDir, parentDir, packageDate)
 
 	logFiles(tempWorkDir, "Temporary workdir after packaging")
+	logFiles(parentDir, "ParentDir")
 }
 
 func logFiles(dir string, msg string) {
@@ -212,6 +213,7 @@ func pkg(goModPath string, tempWorkDir string, parentDir string, packageDate str
 
 	veracodeDir := parentDir + "/veracode"
 	os.Mkdir(veracodeDir, 0700)
+	log.WithField("veracodeDir", veracodeDir).Debug("Created veracode dir for binaries")
 
 	os.Rename(tempWorkDir+"/"+zipFile, veracodeDir+"/"+zipFile)
 	log.WithFields(log.Fields{
