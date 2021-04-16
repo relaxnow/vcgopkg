@@ -7,6 +7,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -217,7 +218,10 @@ func pkg(goModPath string, tempWorkDir string, parentDir string, packageDate str
 	os.Mkdir(veracodeDir, 0700)
 	log.WithField("veracodeDir", veracodeDir).Debug("Created veracode dir for binaries")
 
-	err := os.Rename(tempWorkDir+string(filepath.Separator)+zipFile, veracodeDir+string(filepath.Separator)+zipFile)
+	err := MoveFile(
+		tempWorkDir+string(filepath.Separator)+zipFile,
+		veracodeDir+string(filepath.Separator)+zipFile,
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -292,4 +296,28 @@ func addFiles(w *zip.Writer, basePath, baseInZip string, ignoreFile string) {
 			addFiles(w, newBase, baseInZip+file.Name()+string(filepath.Separator), "")
 		}
 	}
+}
+
+func MoveFile(sourcePath, destPath string) error {
+	inputFile, err := os.Open(sourcePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	outputFile, err := os.Create(destPath)
+	if err != nil {
+		inputFile.Close()
+		log.Fatal(err)
+	}
+	defer outputFile.Close()
+	_, err = io.Copy(outputFile, inputFile)
+	inputFile.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	// The copy was successful, so now delete the original file
+	err = os.Remove(sourcePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return nil
 }
