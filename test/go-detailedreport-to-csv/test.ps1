@@ -25,6 +25,9 @@ if( $LASTEXITCODE -eq 0 ) {
     Write-Output "Compare failed"
 }
 
+
+Write-Host ($c | Format-Table | Out-String)
+
 if ($c -ne 0) {
     Write-Output "Compare -ne 0. Compare results:"
     Write-Output $c
