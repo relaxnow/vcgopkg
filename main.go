@@ -22,7 +22,9 @@ import (
 func main() {
 	flag.Parse()
 	inputPath := flag.Arg(0)
+	packageDate := flag.Arg(1)
 	log.Debug("inputPath=" + inputPath)
+	log.Debug("packageDate=" + packageDate)
 
 	absPath, err := filepath.Abs(inputPath)
 	if err != nil {
@@ -47,7 +49,7 @@ func main() {
 	log.WithField("mainFiles", mainFiles).Debug("Finished getting mainFiles")
 
 	for _, mainFile := range mainFiles {
-		packageMainFile(mainFile)
+		packageMainFile(mainFile, packageDate)
 	}
 }
 
@@ -120,7 +122,7 @@ func getMainFiles(absPathStat os.FileInfo, absPath string) []string {
 	return mainFiles
 }
 
-func packageMainFile(mainFile string) {
+func packageMainFile(mainFile string, packageDate string) {
 	goModPath := ""
 	parentDir := path.Dir(mainFile)
 	log.WithField("parentDir", parentDir).Debug("Starting looking up for mainFile")
@@ -159,7 +161,7 @@ func packageMainFile(mainFile string) {
 
 	updateVeracodeJson(mainFile, parentDir, copyDir)
 
-	pkg(goModPath, tempWorkDir, parentDir)
+	pkg(goModPath, tempWorkDir, parentDir, packageDate)
 
 	logFiles(tempWorkDir, "Temporary workdir after packaging")
 }
@@ -194,11 +196,14 @@ func updateVeracodeJson(mainFile string, parentDir string, copyDir string) {
 	ioutil.WriteFile(copyDir+"/veracode.json", json, 0644)
 }
 
-func pkg(goModPath string, tempWorkDir string, parentDir string) {
+func pkg(goModPath string, tempWorkDir string, parentDir string, packageDate string) {
 	goModDir := filepath.Dir(goModPath)
 	log.Debug(goModDir)
 	baseDir := filepath.Base(goModDir)
-	zipFile := baseDir + time.Now().Format("-20060102150405") + ".zip"
+	if packageDate == "" {
+		packageDate = time.Now().Format("-20060102150405")
+	}
+	zipFile := baseDir + packageDate + ".zip"
 	log.Debug(tempWorkDir + "# zip -r " + zipFile + " " + baseDir)
 	cmd := exec.Command("zip", "-r", zipFile, baseDir)
 	cmd.Dir = tempWorkDir

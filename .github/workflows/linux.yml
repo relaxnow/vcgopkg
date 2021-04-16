@@ -25,4 +25,4 @@ jobs:
       run: go test -v ./...
 
     - name: Functional tests
-      run: test/test.sh
+      run: cd test && ./test.sh

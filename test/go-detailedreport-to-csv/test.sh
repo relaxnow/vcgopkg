@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
-cp -Rf input temp
-../../vcgopkg temp
-diff -r input output
-rm -rf temp
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+rm -rf "$DIR/temp"
+cp -Rf "$DIR/input" "$DIR/temp"
+$DIR/../../vcgopkg "$DIR/temp" "-20060102150405"
+unzip -l "$DIR/temp/go-detailedreport-to-csv/veracode/go-detailedreport-to-csv-20060102150405.zip" | awk '{ print $4 }'> $DIR/temp/temp.zip.log
+unzip -l "$DIR/output/go-detailedreport-to-csv/veracode/go-detailedreport-to-csv-20060102150405.zip" | awk '{ print $4 }' > $DIR/temp/output.zip.log
+diff $DIR/temp/output.zip.log $DIR/temp/temp.zip.log
+rm -rf "$DIR/temp"

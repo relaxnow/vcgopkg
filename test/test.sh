@@ -1,6 +1,9 @@
 #!/bin/bash
-for f in *; do
+set -e
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+for f in $DIR/*; do
     if [ -d "$f" ]; then
-        ./$f/test.sh
+        echo "$f/test.sh"
+        $f/test.sh
     fi
 done
