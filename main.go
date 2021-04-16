@@ -127,7 +127,7 @@ func packageMainFile(mainFile string) {
 	for {
 		goModStat, _ := os.Stat(parentDir + "/go.mod")
 
-		if goModStat == nil {
+		if goModStat != nil {
 			goModPath = parentDir + "/go.mod"
 			log.WithField("goModPath", goModPath).Debug("Found go.mod path")
 			break
@@ -142,16 +142,18 @@ func packageMainFile(mainFile string) {
 	}
 
 	tempWorkDir, err := os.MkdirTemp("", "vcgopkg")
-	log.Debug(tempWorkDir)
+	log.WithField("tempWorkDir", tempWorkDir).Debug("Creating temporary working directory")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer os.RemoveAll(tempWorkDir)
 
 	copyDir := tempWorkDir + "/" + filepath.Base(filepath.Dir(goModPath))
+
+	log.WithFields(log.Fields{"from": parentDir, "to": copyDir}).Debug("Copying files")
 	copy.Copy(parentDir, copyDir)
 
-	listFiles(copyDir) // DEBUG
+	logFiles(copyDir, "Copied Files")
 
 	vendorDir(copyDir)
 
@@ -159,10 +161,10 @@ func packageMainFile(mainFile string) {
 
 	pkg(goModPath, tempWorkDir, parentDir)
 
-	listFiles(tempWorkDir) // DEBUG
+	logFiles(tempWorkDir, "Temporary workdir after packaging")
 }
 
-func listFiles(dir string) {
+func logFiles(dir string, msg string) {
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
 		log.Fatal(err)
@@ -176,7 +178,7 @@ func listFiles(dir string) {
 	log.WithFields(log.Fields{
 		"dir":      "files",
 		"fileList": fileList,
-	}).Debug("File list")
+	}).Debug(msg)
 }
 
 func vendorDir(copyDir string) {
