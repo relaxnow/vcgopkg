@@ -165,6 +165,7 @@ func packageMainFile(mainFile string, packageDate string) {
 
 	logFiles(tempWorkDir, "Temporary workdir after packaging")
 	logFiles(parentDir, "ParentDir")
+	logFiles(parentDir+"/veracode", "Veracode Dir")
 }
 
 func logFiles(dir string, msg string) {
