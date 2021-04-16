@@ -7,7 +7,6 @@ import (
 	"go/parser"
 	"go/token"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -15,44 +14,56 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/otiai10/copy"
 )
 
 func main() {
 	flag.Parse()
 	inputPath := flag.Arg(0)
-	fmt.Println(inputPath)
+	log.Debug("inputPath=" + inputPath)
 
 	absPath, err := filepath.Abs(inputPath)
 	if err != nil {
-		log.Printf("Error getting absolute path for '%s'. File or path may not exist? Original error: '%s'", inputPath, err)
-		os.Exit(1)
-		return
+		log.WithFields(log.Fields{
+			"inputPath":     inputPath,
+			"originalError": err,
+		}).Fatal("Error getting absolute path. File or path may not exist")
 	}
 
 	absPathStat, err := os.Stat(absPath)
 	if err != nil {
-		log.Printf("Error getting stat for '%s'. File or path may not exist? Original error: '%s'", absPath, err)
-		os.Exit(1)
-		return
+		log.WithFields(log.Fields{
+			"absPath":       absPath,
+			"originalError": err,
+		}).Fatal("Error getting stat. File or path may not exist.")
 	}
 
-	log.Print("Reading go files in: " + absPath)
+	log.WithField("absPath", "absPath").Debug("Reading go files")
 
 	mainFiles := getMainFiles(absPathStat, absPath)
 
-	spew.Dump(mainFiles)
+	log.WithField("mainFiles", mainFiles).Debug("Finished getting mainFiles")
 
 	for _, mainFile := range mainFiles {
 		packageMainFile(mainFile)
 	}
 }
 
+func init() {
+	// Output to stdout instead of the default stderr
+	// Can be any io.Writer, see below for File example
+	log.SetOutput(os.Stdout)
+
+	// Only log the warning severity or above.
+	log.SetLevel(log.DebugLevel)
+}
+
 func getMainFiles(absPathStat os.FileInfo, absPath string) []string {
 	mainFiles := []string{}
 	if absPathStat.IsDir() {
-		log.Printf("'%s' input is dir", absPath)
+		log.WithField("absPath", absPath).Debug("Input is dir")
 		err := filepath.Walk(absPath,
 			func(path string, info os.FileInfo, err error) error {
 				if err != nil {
@@ -92,7 +103,7 @@ func getMainFiles(absPathStat os.FileInfo, absPath string) []string {
 		parsedFile, err := parser.ParseFile(token.NewFileSet(), absPath, nil, parser.ParseComments)
 
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 
 		for _, decl := range parsedFile.Decls {
@@ -128,9 +139,9 @@ func packageMainFile(mainFile string) {
 		break
 	}
 
-	println(goModPath)
+	log.Debug(goModPath)
 	tempWorkDir, err := os.MkdirTemp("", "vcgopkg")
-	println(tempWorkDir)
+	log.Debug(tempWorkDir)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -139,27 +150,55 @@ func packageMainFile(mainFile string) {
 	copyDir := tempWorkDir + "/" + filepath.Base(filepath.Dir(goModPath))
 	copy.Copy(parentDir, copyDir)
 
-	// DEBUG
-	cmd := exec.Command("ls", "-lah", copyDir)
-	cmdOut, _ := cmd.Output()
-	println(string(cmdOut))
-	// DEBUG
+	listFiles(copyDir) // DEBUG
 
-	cmd = exec.Command("go", "mod", "vendor")
+	vendorDir(copyDir)
+
+	updateVeracodeJson(mainFile, parentDir, copyDir)
+
+	pkg(goModPath, tempWorkDir, parentDir)
+
+	listFiles(tempWorkDir) // DEBUG
+}
+
+func listFiles(dir string) {
+	files, err := ioutil.ReadDir(dir)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fileList := []string{}
+	for _, file := range files {
+		fileList = append(fileList, file.Name())
+	}
+
+	log.WithFields(log.Fields{
+		"dir":      "files",
+		"fileList": fileList,
+	}).Debug("File list")
+}
+
+func vendorDir(copyDir string) {
+	cmd := exec.Command("go", "mod", "vendor")
 	cmd.Dir = copyDir
-	cmdOut, _ = cmd.Output()
-	println(string(cmdOut))
+	cmdOut, _ := cmd.Output()
+	log.Debug(string(cmdOut))
+}
 
+func updateVeracodeJson(mainFile string, parentDir string, copyDir string) {
 	mainFileRelativePath := strings.TrimPrefix(path.Base(mainFile), parentDir)
 	json := []byte(fmt.Sprintf("{\"MainFile\": \"%s\"}", mainFileRelativePath))
 	ioutil.WriteFile(copyDir+"/veracode.json", json, 0644)
+}
 
+func pkg(goModPath string, tempWorkDir string, parentDir string) {
 	baseDir := filepath.Base(filepath.Dir(goModPath))
 	zipFile := baseDir + time.Now().Format("-20060102150405") + ".zip"
-	cmd = exec.Command("zip", "-r", zipFile, baseDir)
+	log.Debug(tempWorkDir + "# zip -r " + zipFile + " " + baseDir)
+	cmd := exec.Command("zip", "-r", zipFile, baseDir)
 	cmd.Dir = tempWorkDir
-	cmdOut, _ = cmd.Output()
-	println(string(cmdOut))
+	cmdOut, _ := cmd.Output()
+	log.Debug(string(cmdOut))
 
 	veracodeDir := parentDir + "/veracode"
 	os.Mkdir(veracodeDir, 0700)
@@ -167,12 +206,6 @@ func packageMainFile(mainFile string) {
 	cmd = exec.Command("mv", zipFile, veracodeDir)
 	cmd.Dir = tempWorkDir
 	cmdOut, _ = cmd.Output()
-	println("mv " + zipFile + " " + veracodeDir)
-	println(string(cmdOut))
-
-	// DEBUG
-	cmd = exec.Command("ls", "-lah", tempWorkDir)
-	cmdOut, _ = cmd.Output()
-	println(string(cmdOut))
-	// DEBUG
+	log.Debug("mv " + zipFile + " " + veracodeDir)
+	log.Debug(string(cmdOut))
 }
