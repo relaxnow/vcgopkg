@@ -90,7 +90,7 @@ func getMainFiles(absPathStat os.FileInfo, absPath string) []string {
 					for _, file := range pkg.Files {
 						for _, decl := range file.Decls {
 							if ast.FilterDecl(decl, func(name string) bool { return name == "main" }) {
-								mainFiles = append(mainFiles, path+"/"+file.Name.Name+".go")
+								mainFiles = append(mainFiles, path+string(filepath.Separator)+file.Name.Name+".go")
 							}
 						}
 					}
@@ -127,10 +127,10 @@ func packageMainFile(mainFile string, packageDate string) {
 	parentDir := filepath.Dir(mainFile)
 	log.WithField("parentDir", parentDir).Debug("Starting looking up for mainFile")
 	for {
-		goModStat, _ := os.Stat(parentDir + "/go.mod")
+		goModStat, _ := os.Stat(parentDir + string(filepath.Separator) + "go.mod")
 
 		if goModStat != nil {
-			goModPath = parentDir + "/go.mod"
+			goModPath = parentDir + string(filepath.Separator) + "go.mod"
 			log.WithField("goModPath", goModPath).Debug("Found go.mod path")
 			break
 		}
@@ -150,7 +150,7 @@ func packageMainFile(mainFile string, packageDate string) {
 	}
 	defer os.RemoveAll(tempWorkDir)
 
-	copyDir := tempWorkDir + "/" + filepath.Base(filepath.Dir(goModPath))
+	copyDir := tempWorkDir + string(filepath.Separator) + filepath.Base(filepath.Dir(goModPath))
 
 	log.WithFields(log.Fields{"from": parentDir, "to": copyDir}).Debug("Copying files")
 	copy.Copy(parentDir, copyDir)
@@ -165,7 +165,7 @@ func packageMainFile(mainFile string, packageDate string) {
 
 	logFiles(tempWorkDir, "Temporary workdir after packaging")
 	logFiles(parentDir, "ParentDir")
-	logFiles(parentDir+"/veracode", "Veracode Dir")
+	logFiles(parentDir+string(filepath.Separator)+"veracode", "Veracode Dir")
 }
 
 func logFiles(dir string, msg string) {
@@ -195,7 +195,7 @@ func vendorDir(copyDir string) {
 func updateVeracodeJson(mainFile string, parentDir string, copyDir string) {
 	mainFileRelativePath := strings.TrimPrefix(path.Base(mainFile), parentDir)
 	json := []byte(fmt.Sprintf("{\"MainFile\": \"%s\"}", mainFileRelativePath))
-	ioutil.WriteFile(copyDir+"/veracode.json", json, 0644)
+	ioutil.WriteFile(copyDir+string(filepath.Separator)+"veracode.json", json, 0644)
 }
 
 func pkg(goModPath string, tempWorkDir string, parentDir string, packageDate string) {
@@ -212,17 +212,17 @@ func pkg(goModPath string, tempWorkDir string, parentDir string, packageDate str
 	cmdOut, _ := cmd.Output()
 	log.Debug(string(cmdOut))
 
-	veracodeDir := parentDir + "/veracode"
+	veracodeDir := parentDir + string(filepath.Separator) + "veracode"
 	os.Mkdir(veracodeDir, 0700)
 	log.WithField("veracodeDir", veracodeDir).Debug("Created veracode dir for binaries")
 
-	err := os.Rename(tempWorkDir+"/"+zipFile, veracodeDir+"/"+zipFile)
+	err := os.Rename(tempWorkDir+string(filepath.Separator)+zipFile, veracodeDir+string(filepath.Separator)+zipFile)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	log.WithFields(log.Fields{
-		"from": tempWorkDir + "/" + zipFile,
-		"to":   veracodeDir + "/" + zipFile,
+		"from": tempWorkDir + string(filepath.Separator) + zipFile,
+		"to":   veracodeDir + string(filepath.Separator) + zipFile,
 	}).Debug("Rename zipfile")
 }
