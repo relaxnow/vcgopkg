@@ -16,3 +16,4 @@ if ($c -ne 0) {
     Write-Output $c
     exit 1
 }
+exit 0
