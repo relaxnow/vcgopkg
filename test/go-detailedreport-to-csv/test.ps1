@@ -9,11 +9,11 @@ if( $LASTEXITCODE -eq 0 ) {
 }
 
 Move-Item -Path $PSScriptRoot\temp -Destination $PSScriptRoot\test
-$fsTemp  = Get-ChildItem -Recurse -path $PSScriptRoot\test
+$fsTemp  = Get-ChildItem -Recurse -path $PSScriptRoot\test | Select-Object FullName
 Move-Item -Path $PSScriptRoot\test -Destination $PSScriptRoot\temp
 
 Move-Item -Path $PSScriptRoot\output -Destination $PSScriptRoot\test
-$fsOutput = Get-ChildItem -Recurse -path $PSScriptRoot\test
+$fsOutput = Get-ChildItem -Recurse -path $PSScriptRoot\test | Select-Object FullName
 Move-Item -Path $PSScriptRoot\test -Destination $PSScriptRoot\output
 
 $fsTemp
