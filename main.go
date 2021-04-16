@@ -123,23 +123,24 @@ func getMainFiles(absPathStat os.FileInfo, absPath string) []string {
 func packageMainFile(mainFile string) {
 	goModPath := ""
 	parentDir := path.Dir(mainFile)
+	log.WithField("parentDir", parentDir).Debug("Starting looking up for mainFile")
 	for {
 		goModStat, _ := os.Stat(parentDir + "/go.mod")
 
 		if goModStat == nil {
-			if parentDir != "" {
-				parentDir = path.Dir(parentDir)
-				continue
-			} else {
-				break
-			}
+			goModPath = parentDir + "/go.mod"
+			break
+		}
+		if parentDir != "" {
+			log.WithField("parentDir", parentDir).Debug("Starting looking up for mainFile")
+			parentDir = path.Dir(parentDir)
+			continue
 		}
 
-		goModPath = parentDir + "/go.mod"
-		break
+		log.Fatal("go.mod not found")
 	}
 
-	log.Debug(goModPath)
+	log.WithField("goModPath", goModPath).Debug("Found go.mod path")
 	tempWorkDir, err := os.MkdirTemp("", "vcgopkg")
 	log.Debug(tempWorkDir)
 	if err != nil {
@@ -192,7 +193,9 @@ func updateVeracodeJson(mainFile string, parentDir string, copyDir string) {
 }
 
 func pkg(goModPath string, tempWorkDir string, parentDir string) {
-	baseDir := filepath.Base(filepath.Dir(goModPath))
+	goModDir := filepath.Dir(goModPath)
+	log.Debug(goModDir)
+	baseDir := filepath.Base(goModDir)
 	zipFile := baseDir + time.Now().Format("-20060102150405") + ".zip"
 	log.Debug(tempWorkDir + "# zip -r " + zipFile + " " + baseDir)
 	cmd := exec.Command("zip", "-r", zipFile, baseDir)
