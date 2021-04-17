@@ -18,10 +18,8 @@ Move-Item -Path $PSScriptRoot\test -Destination $PSScriptRoot\output
 
 $c = Compare-Object -ReferenceObject $fsOutput -DifferenceObject $fsOutput
 
-if ($c -ne 0) {
-    Write-Output "Compare -ne 0. Compare results:"
+if ($c) {
+    Write-Output "Differences detected"
     Write-Output $c
     exit 1
-} else {
-    exit 0
 }
