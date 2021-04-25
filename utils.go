@@ -30,10 +30,5 @@ func MoveFile(sourcePath, destPath string) error {
 	// Copy file
 	_, err = io.Copy(outputFile, inputFile)
 
-	if err != nil {
-		return err
-	}
-
-	// The copy was successful, so now delete the original file
-	return os.Remove(sourcePath)
+	return err
 }
