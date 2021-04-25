@@ -1,13 +1,11 @@
 package main
 
 import (
-	"archive/zip"
 	"flag"
 	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -21,6 +19,9 @@ import (
 	"github.com/otiai10/copy"
 )
 
+// TODO: implement non-debug mode
+// TODO: implement versioning
+// TODO: implement update check
 func main() {
 	flag.Parse()
 	inputPath := flag.Arg(0)
@@ -35,6 +36,7 @@ func main() {
 			"originalError": err,
 		}).Fatal("Error getting absolute path. File or path may not exist")
 	}
+	log.WithField("absPath", absPath).Debug("Reading go files")
 
 	absPathStat, err := os.Stat(absPath)
 	if err != nil {
@@ -44,8 +46,6 @@ func main() {
 		}).Fatal("Error getting stat. File or path may not exist.")
 	}
 
-	log.WithField("absPath", "absPath").Debug("Reading go files")
-
 	mainFiles := getMainFiles(absPathStat, absPath)
 
 	log.WithField("mainFiles", mainFiles).Debug("Finished getting mainFiles")
@@ -53,15 +53,6 @@ func main() {
 	for _, mainFile := range mainFiles {
 		packageMainFile(mainFile, packageDate)
 	}
-}
-
-func init() {
-	// Output to stdout instead of the default stderr
-	// Can be any io.Writer, see below for File example
-	log.SetOutput(os.Stdout)
-
-	// Only log the warning severity or above.
-	log.SetLevel(log.DebugLevel)
 }
 
 func getMainFiles(absPathStat os.FileInfo, absPath string) []string {
@@ -157,7 +148,7 @@ func packageMainFile(mainFile string, packageDate string) {
 	log.WithFields(log.Fields{"from": parentDir, "to": copyDir}).Debug("Copying files")
 	copy.Copy(parentDir, copyDir)
 
-	logFiles(copyDir, "Copied Files")
+	LogFiles(copyDir, "Copied Files")
 
 	vendorDir(copyDir)
 
@@ -165,28 +156,12 @@ func packageMainFile(mainFile string, packageDate string) {
 
 	pkg(goModPath, tempWorkDir, parentDir, packageDate)
 
-	logFiles(tempWorkDir, "Temporary workdir after packaging")
-	logFiles(parentDir, "ParentDir")
-	logFiles(parentDir+string(filepath.Separator)+"veracode", "Veracode Dir")
+	LogFiles(tempWorkDir, "Temporary workdir after packaging")
+	LogFiles(parentDir, "ParentDir")
+	LogFiles(parentDir+string(filepath.Separator)+"veracode", "Veracode Dir")
 }
 
-func logFiles(dir string, msg string) {
-	files, err := ioutil.ReadDir(dir)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fileList := []string{}
-	for _, file := range files {
-		fileList = append(fileList, file.Name())
-	}
-
-	log.WithFields(log.Fields{
-		"dir":      dir,
-		"fileList": fileList,
-	}).Debug(msg)
-}
-
+// TODO: test if already correctly vendored
 func vendorDir(copyDir string) {
 	cmd := exec.Command("go", "mod", "vendor")
 	cmd.Dir = copyDir
@@ -194,12 +169,16 @@ func vendorDir(copyDir string) {
 	log.Debug(string(cmdOut))
 }
 
+// TODO: update veracode.json instead of overwriting it
 func updateVeracodeJson(mainFile string, parentDir string, copyDir string) {
 	mainFileRelativePath := strings.TrimPrefix(path.Base(mainFile), parentDir)
 	json := []byte(fmt.Sprintf("{\"MainFile\": \"%s\"}", mainFileRelativePath))
 	ioutil.WriteFile(copyDir+string(filepath.Separator)+"veracode.json", json, 0644)
 }
 
+// TODO: Allow writing to output directory
+// TODO: Use path to main in output file to support multiple path
+// TODO: Test package with go loader
 func pkg(goModPath string, tempWorkDir string, parentDir string, packageDate string) {
 	goModDir := filepath.Dir(goModPath)
 	log.Debug(goModDir)
@@ -230,94 +209,4 @@ func pkg(goModPath string, tempWorkDir string, parentDir string, packageDate str
 		"from": tempWorkDir + string(filepath.Separator) + zipFile,
 		"to":   veracodeDir + string(filepath.Separator) + zipFile,
 	}).Debug("Rename zipfile")
-}
-
-func ZipWriter(baseFolder string, outputZipFile string) {
-	// Get a Buffer to Write To
-	outFile, err := os.Create(outputZipFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer outFile.Close()
-
-	// Create a new zip archive.
-	w := zip.NewWriter(outFile)
-
-	// Add some files to the archive.
-	addFiles(w, baseFolder, "", filepath.Base(outputZipFile))
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Make sure to check the error on Close.
-	err = w.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func addFiles(w *zip.Writer, basePath, baseInZip string, ignoreFile string) {
-	// Open the Directory
-	basePath = basePath + string(filepath.Separator)
-	files, err := ioutil.ReadDir(basePath)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, file := range files {
-		if file.Name() == ignoreFile {
-			continue
-		}
-
-		log.Debug(basePath + file.Name())
-		if !file.IsDir() {
-			dat, err := ioutil.ReadFile(basePath + file.Name())
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			// Add some files to the archive.
-			f, err := w.Create(baseInZip + file.Name())
-			if err != nil {
-				log.Fatal(err)
-			}
-			_, err = f.Write(dat)
-			if err != nil {
-				log.Fatal(err)
-			}
-		} else if file.IsDir() {
-
-			// Recurse
-			newBase := basePath + file.Name() + string(filepath.Separator)
-			log.Debug("Recursing and Adding SubDir: " + file.Name())
-			log.Debug("Recursing and Adding SubDir: " + newBase)
-
-			addFiles(w, newBase, baseInZip+file.Name()+string(filepath.Separator), "")
-		}
-	}
-}
-
-func MoveFile(sourcePath, destPath string) error {
-	inputFile, err := os.Open(sourcePath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	outputFile, err := os.Create(destPath)
-	if err != nil {
-		inputFile.Close()
-		log.Fatal(err)
-	}
-	defer outputFile.Close()
-	_, err = io.Copy(outputFile, inputFile)
-	inputFile.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
-	// The copy was successful, so now delete the original file
-	err = os.Remove(sourcePath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return nil
 }
