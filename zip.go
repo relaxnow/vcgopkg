@@ -79,4 +79,5 @@ func addFiles(w *zip.Writer, basePath, baseInZip string, ignoreFile string) erro
 			addFiles(w, newBase, baseInZip+file.Name()+string(filepath.Separator), "")
 		}
 	}
+	return nil
 }

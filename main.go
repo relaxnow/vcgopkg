@@ -188,6 +188,7 @@ func packageMainFile(mainFile string, packageDate string) error {
 	LogFiles(tempWorkDir, "Temporary workdir after packaging")
 	LogFiles(parentDir, "ParentDir")
 	LogFiles(parentDir+string(filepath.Separator)+"veracode", "Veracode Dir")
+	return nil
 }
 
 // TODO: test if already correctly vendored
@@ -247,4 +248,5 @@ func pkg(goModPath string, tempWorkDir string, parentDir string, packageDate str
 		"from": tempWorkDir + string(filepath.Separator) + zipFile,
 		"to":   veracodeDir + string(filepath.Separator) + zipFile,
 	}).Debug("Rename zipfile")
+	return nil
 }
