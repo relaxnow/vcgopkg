@@ -19,3 +19,9 @@ vcgopkg repo/path/to/dir/cmd/main.go
 ```
 vcgopkg will then look for all main funcs and produce a .zip file for each, for example: **repo.zip**. 
 This can then be uploaded to Veracode for Static Analysis.
+
+## Download
+
+```
+go get github.com/relaxnow/vcgopkg
+```
