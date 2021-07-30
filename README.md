@@ -1,6 +1,8 @@
 # vcgopkg
 Unofficial Community Project to help package a Go application for Veracode Static Analysis
 
+# IN DEVELOPMENT, DO NOT USE
+
 ## Usage
 
 Package the current working directory:
@@ -22,6 +24,9 @@ This can then be uploaded to Veracode for Static Analysis.
 
 ## Download
 
+On Linux:
 ```
-go get github.com/relaxnow/vcgopkg
+export GOPATH=`go env GOPATH` &&
+export PATH="$PATH:$GOPATH/bin" &&
+go install github.com/relaxnow/vcgopkg
 ```
