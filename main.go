@@ -193,10 +193,25 @@ func packageMainFile(mainFile string, packageDate string) error {
 	return nil
 }
 
-// TODO: test if already correctly vendored
-// TODO: skip vendoring if vendor dir already exists
 func vendorDir(copyDir string) error {
 	log.Debug("Starting vendor")
+
+	_, goPathErr := exec.LookPath("go")
+	log.Debug(goPathErr)
+	_, vendorPathErr := os.Stat(copyDir + "/vendor")
+	log.Debug(vendorPathErr)
+
+	canFindVendor := vendorPathErr == nil
+	canFindGoExecutable := goPathErr == nil
+
+	if !canFindVendor && !canFindGoExecutable {
+		log.Debug("Error getting stat of /vendor")
+		return fmt.Errorf("no vendor directory and unable to run go mod vendor")
+	} else if !canFindGoExecutable && canFindVendor {
+		log.Debug("No go but an existing vendor dir, chancing it")
+		return nil
+	}
+
 	cmd := exec.Command("go", "mod", "vendor")
 	cmd.Dir = copyDir
 	cmdOut, err := cmd.Output()
