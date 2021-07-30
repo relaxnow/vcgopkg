@@ -23,6 +23,7 @@ import (
 // TODO: implement non-debug mode
 // TODO: implement versioning
 // TODO: implement update check
+// TODO: implement help
 func main() {
 	flag.Parse()
 	inputPath := flag.Arg(0)
@@ -132,6 +133,7 @@ func getMainFiles(absPathStat os.FileInfo, absPath string) ([]string, error) {
 	return mainFiles, nil
 }
 
+// TODO: Make work with GOPATH
 func packageMainFile(mainFile string, packageDate string) error {
 	goModPath := ""
 	parentDir := filepath.Dir(mainFile)
@@ -203,6 +205,7 @@ func vendorDir(copyDir string) error {
 }
 
 // TODO: update veracode.json instead of overwriting it
+// TODO: Find FirstParty
 func updateVeracodeJson(mainFile string, parentDir string, copyDir string) error {
 	mainFileRelativePath := strings.TrimPrefix(path.Base(mainFile), parentDir)
 	json := []byte(fmt.Sprintf("{\"MainFile\": \"%s\"}", mainFileRelativePath))
