@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"go/ast"
@@ -34,7 +35,8 @@ func main() {
 		log.WithFields(log.Fields{
 			"inputPath":     inputPath,
 			"originalError": err,
-		}).Fatal("Error getting absolute path. File or path may not exist")
+		}).Panic("Error getting absolute path. File or path may not exist")
+		panic("Error getting absolute path. File or path may not exist")
 	}
 	log.WithField("absPath", absPath).Debug("Reading go files")
 
@@ -43,19 +45,34 @@ func main() {
 		log.WithFields(log.Fields{
 			"absPath":       absPath,
 			"originalError": err,
-		}).Fatal("Error getting stat. File or path may not exist.")
+		}).Panic("Error getting stat. File or path may not exist.")
+		panic("Error getting stat. File or path may not exist.")
 	}
 
-	mainFiles := getMainFiles(absPathStat, absPath)
+	mainFiles, err := getMainFiles(absPathStat, absPath)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"inputPath":     inputPath,
+			"originalError": err,
+		}).Panic("Error getting main files")
+		panic("Error getting main files")
+	}
 
 	log.WithField("mainFiles", mainFiles).Debug("Finished getting mainFiles")
 
 	for _, mainFile := range mainFiles {
-		packageMainFile(mainFile, packageDate)
+		err = packageMainFile(mainFile, packageDate)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"mainFile":      mainFile,
+				"originalError": err,
+			}).Panic("Error getting main file")
+			panic("Error getting main file")
+		}
 	}
 }
 
-func getMainFiles(absPathStat os.FileInfo, absPath string) []string {
+func getMainFiles(absPathStat os.FileInfo, absPath string) ([]string, error) {
 	mainFiles := []string{}
 	if absPathStat.IsDir() {
 		log.WithField("absPath", absPath).Debug("Input is dir")
@@ -76,7 +93,7 @@ func getMainFiles(absPathStat os.FileInfo, absPath string) []string {
 				)
 
 				if err != nil {
-					panic(err)
+					return err
 				}
 
 				for _, pkg := range parsedPackages {
@@ -91,14 +108,14 @@ func getMainFiles(absPathStat os.FileInfo, absPath string) []string {
 				return nil
 			})
 		if err != nil {
-			log.Fatal(err)
+			return []string{}, err
 		}
 	} else if absPathStat.Mode().Perm().IsRegular() {
 		log.Printf("'%s' input is a file", absPath)
 		parsedFile, err := parser.ParseFile(token.NewFileSet(), absPath, nil, parser.ParseComments)
 
 		if err != nil {
-			log.Fatal(err)
+			return []string{}, err
 		}
 
 		for _, decl := range parsedFile.Decls {
@@ -107,15 +124,15 @@ func getMainFiles(absPathStat os.FileInfo, absPath string) []string {
 			}
 		}
 	} else {
-		log.Fatalf("'%s' does not exist", absPath)
+		return []string{}, errors.New(fmt.Sprintf("'%s' does not exist", absPath))
 	}
 	if len(mainFiles) == 0 {
-		log.Fatalf("No main files found in %s", absPath)
+		return []string{}, errors.New(fmt.Sprintf("No main files found in %s", absPath))
 	}
-	return mainFiles
+	return mainFiles, nil
 }
 
-func packageMainFile(mainFile string, packageDate string) {
+func packageMainFile(mainFile string, packageDate string) error {
 	goModPath := ""
 	parentDir := filepath.Dir(mainFile)
 	log.WithField("parentDir", parentDir).Debug("Starting looking up for mainFile")
@@ -133,28 +150,40 @@ func packageMainFile(mainFile string, packageDate string) {
 			continue
 		}
 
-		log.Fatal("go.mod not found")
+		return errors.New("go.mod not found")
 	}
 
 	tempWorkDir, err := os.MkdirTemp("", "vcgopkg")
 	log.WithField("tempWorkDir", tempWorkDir).Debug("Creating temporary working directory")
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer os.RemoveAll(tempWorkDir)
 
 	copyDir := tempWorkDir + string(filepath.Separator) + filepath.Base(filepath.Dir(goModPath))
 
 	log.WithFields(log.Fields{"from": parentDir, "to": copyDir}).Debug("Copying files")
-	copy.Copy(parentDir, copyDir)
+	err = copy.Copy(parentDir, copyDir)
+	if err != nil {
+		return err
+	}
 
 	LogFiles(copyDir, "Copied Files")
 
-	vendorDir(copyDir)
+	err = vendorDir(copyDir)
+	if err != nil {
+		return err
+	}
 
-	updateVeracodeJson(mainFile, parentDir, copyDir)
+	err = updateVeracodeJson(mainFile, parentDir, copyDir)
+	if err != nil {
+		return err
+	}
 
-	pkg(goModPath, tempWorkDir, parentDir, packageDate)
+	err = pkg(goModPath, tempWorkDir, parentDir, packageDate)
+	if err != nil {
+		return err
+	}
 
 	LogFiles(tempWorkDir, "Temporary workdir after packaging")
 	LogFiles(parentDir, "ParentDir")
@@ -162,24 +191,27 @@ func packageMainFile(mainFile string, packageDate string) {
 }
 
 // TODO: test if already correctly vendored
-func vendorDir(copyDir string) {
+// TODO: skip vendoring if vendor dir already exists
+func vendorDir(copyDir string) error {
+	log.Debug("Starting vendor")
 	cmd := exec.Command("go", "mod", "vendor")
 	cmd.Dir = copyDir
-	cmdOut, _ := cmd.Output()
+	cmdOut, err := cmd.Output()
 	log.Debug(string(cmdOut))
+	return err
 }
 
 // TODO: update veracode.json instead of overwriting it
-func updateVeracodeJson(mainFile string, parentDir string, copyDir string) {
+func updateVeracodeJson(mainFile string, parentDir string, copyDir string) error {
 	mainFileRelativePath := strings.TrimPrefix(path.Base(mainFile), parentDir)
 	json := []byte(fmt.Sprintf("{\"MainFile\": \"%s\"}", mainFileRelativePath))
-	ioutil.WriteFile(copyDir+string(filepath.Separator)+"veracode.json", json, 0644)
+	return ioutil.WriteFile(copyDir+string(filepath.Separator)+"veracode.json", json, 0644)
 }
 
 // TODO: Allow writing to output directory
 // TODO: Use path to main in output file to support multiple path
 // TODO: Test package with go loader
-func pkg(goModPath string, tempWorkDir string, parentDir string, packageDate string) {
+func pkg(goModPath string, tempWorkDir string, parentDir string, packageDate string) error {
 	goModDir := filepath.Dir(goModPath)
 	log.Debug(goModDir)
 	baseDir := filepath.Base(goModDir)
@@ -191,18 +223,24 @@ func pkg(goModPath string, tempWorkDir string, parentDir string, packageDate str
 		"baseDir": baseDir,
 		"zipFile": tempWorkDir + string(filepath.Separator) + zipFile,
 	}).Debug("Writing zip file")
-	ZipWriter(tempWorkDir, tempWorkDir+string(filepath.Separator)+zipFile)
+	err := ZipWriter(tempWorkDir, tempWorkDir+string(filepath.Separator)+zipFile)
+	if err != nil {
+		return err
+	}
 
 	veracodeDir := parentDir + string(filepath.Separator) + "veracode"
-	os.Mkdir(veracodeDir, 0700)
+	err = os.Mkdir(veracodeDir, 0700)
 	log.WithField("veracodeDir", veracodeDir).Debug("Created veracode dir for binaries")
+	if err != nil {
+		return err
+	}
 
-	err := MoveFile(
+	err = MoveFile(
 		tempWorkDir+string(filepath.Separator)+zipFile,
 		veracodeDir+string(filepath.Separator)+zipFile,
 	)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	log.WithFields(log.Fields{

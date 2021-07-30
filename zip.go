@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func ZipWriter(baseFolder string, outputZipFilePath string) {
+func ZipWriter(baseFolder string, outputZipFilePath string) error {
 	// Create file.
 	outFile, err := os.Create(outputZipFilePath)
 	if outFile != nil {
@@ -19,7 +19,8 @@ func ZipWriter(baseFolder string, outputZipFilePath string) {
 		log.WithFields(log.Fields{
 			"outputZipFile": outputZipFilePath,
 			"err":           err,
-		}).Fatal("Failed creating zip file")
+		}).Error("Failed creating zip file")
+		return err
 	}
 
 	// Create a new zip archive.
@@ -29,22 +30,19 @@ func ZipWriter(baseFolder string, outputZipFilePath string) {
 	addFiles(zipWriter, baseFolder, "", filepath.Base(outputZipFilePath))
 
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	// Make sure to check the error on Close.
-	err = zipWriter.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
+	return zipWriter.Close()
 }
 
-func addFiles(w *zip.Writer, basePath, baseInZip string, ignoreFile string) {
+func addFiles(w *zip.Writer, basePath, baseInZip string, ignoreFile string) error {
 	// Open the Directory
 	basePath = basePath + string(filepath.Separator)
 	files, err := ioutil.ReadDir(basePath)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	for _, file := range files {
@@ -56,17 +54,20 @@ func addFiles(w *zip.Writer, basePath, baseInZip string, ignoreFile string) {
 		if !file.IsDir() {
 			dat, err := ioutil.ReadFile(basePath + file.Name())
 			if err != nil {
-				log.Fatal(err)
+				log.Error(err)
+				return err
 			}
 
 			// Add some files to the archive.
 			f, err := w.Create(baseInZip + file.Name())
 			if err != nil {
-				log.Fatal(err)
+				log.Error(err)
+				return err
 			}
 			_, err = f.Write(dat)
 			if err != nil {
-				log.Fatal(err)
+				log.Error(err)
+				return err
 			}
 		} else if file.IsDir() {
 
