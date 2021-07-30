@@ -256,11 +256,11 @@ func pkg(goModPath string, mainFile string, tempWorkDir string, parentDir string
 	veracodeDir := parentDir + string(filepath.Separator) + "veracode"
 	_, err = os.Stat(veracodeDir)
 	if err != nil {
-	err = os.Mkdir(veracodeDir, 0700)
-	log.WithField("veracodeDir", veracodeDir).Debug("Created veracode dir for binaries")
-	if err != nil {
-		return err
-	}
+		err = os.Mkdir(veracodeDir, 0700)
+		log.WithField("veracodeDir", veracodeDir).Debug("Created veracode dir for binaries")
+		if err != nil {
+			return err
+		}
 	}
 
 	err = MoveFile(
