@@ -182,7 +182,7 @@ func packageMainFile(mainFile string, packageDate string) error {
 		return err
 	}
 
-	err = pkg(goModPath, tempWorkDir, parentDir, packageDate)
+	err = pkg(goModPath, mainFile, tempWorkDir, parentDir, packageDate)
 	if err != nil {
 		return err
 	}
@@ -230,14 +230,20 @@ func updateVeracodeJson(mainFile string, parentDir string, copyDir string) error
 // TODO: Allow writing to output directory
 // TODO: Use path to main in output file to support multiple path
 // TODO: Test package with go loader
-func pkg(goModPath string, tempWorkDir string, parentDir string, packageDate string) error {
+func pkg(goModPath string, mainFile string, tempWorkDir string, parentDir string, packageDate string) error {
 	goModDir := filepath.Dir(goModPath)
 	log.Debug(goModDir)
+	log.Debug(mainFile)
 	baseDir := filepath.Base(goModDir)
 	if packageDate == "" {
-		packageDate = time.Now().Format("-20060102150405")
+		packageDate = time.Now().Format("_20060102150405")
 	}
-	zipFile := baseDir + packageDate + ".zip"
+	// Turn /path/to/module/cmd/main.go into cmd-main
+	relativeMainPath := mainFile[len(goModDir)+1 : len(mainFile)-3]
+	cmdSlug := "_"
+	cmdSlug += strings.ReplaceAll(relativeMainPath, "\\", "--")
+	cmdSlug = strings.ReplaceAll(cmdSlug, "/", "--")
+	zipFile := baseDir + cmdSlug + packageDate + ".zip"
 	log.WithFields(log.Fields{
 		"baseDir": baseDir,
 		"zipFile": tempWorkDir + string(filepath.Separator) + zipFile,
