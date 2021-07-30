@@ -124,10 +124,10 @@ func getMainFiles(absPathStat os.FileInfo, absPath string) ([]string, error) {
 			}
 		}
 	} else {
-		return []string{}, errors.New(fmt.Sprintf("'%s' does not exist", absPath))
+		return []string{}, fmt.Errorf("'%s' does not exist", absPath)
 	}
 	if len(mainFiles) == 0 {
-		return []string{}, errors.New(fmt.Sprintf("No main files found in %s", absPath))
+		return []string{}, fmt.Errorf("no main files found in %s", absPath)
 	}
 	return mainFiles, nil
 }
