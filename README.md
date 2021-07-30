@@ -24,7 +24,7 @@ This can then be uploaded to Veracode for Static Analysis.
 
 ## Download
 
-On Linux:
+On Linux with go get:
 ```
 export GOPATH=`go env GOPATH` &&
 export PATH="$PATH:$GOPATH/bin" &&
