@@ -7,7 +7,6 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -20,6 +19,7 @@ import (
 	"github.com/otiai10/copy"
 )
 
+// TODO: Show version information
 // TODO: implement non-debug mode
 // TODO: implement versioning
 // TODO: implement update check
@@ -219,12 +219,20 @@ func vendorDir(copyDir string) error {
 	return err
 }
 
-// TODO: update veracode.json instead of overwriting it
 // TODO: Find FirstParty
 func updateVeracodeJson(mainFile string, parentDir string, copyDir string) error {
+	veracodeJsonFile, err := NewVeracodeJsonFile(
+		copyDir + string(filepath.Separator) + "veracode.json",
+	)
+
+	if err != nil {
+		return err
+	}
+
 	mainFileRelativePath := strings.TrimPrefix(path.Base(mainFile), parentDir)
-	json := []byte(fmt.Sprintf("{\"MainFile\": \"%s\"}", mainFileRelativePath))
-	return ioutil.WriteFile(copyDir+string(filepath.Separator)+"veracode.json", json, 0644)
+	veracodeJsonFile.VeracodeJson.MainRoot = mainFileRelativePath
+
+	return veracodeJsonFile.WriteToFile()
 }
 
 // TODO: Allow writing to output directory
