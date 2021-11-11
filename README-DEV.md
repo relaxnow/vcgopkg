@@ -3,6 +3,7 @@
 Guiding philosophy of vcgopkg is to:
 * Assume the best; warn instead of error if possible
 * Be humble; verbose on error, quiet on success
+* Debug log all the things, to better support customers running the application
 
 # TODO
 
