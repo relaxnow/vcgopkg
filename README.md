@@ -1,8 +1,6 @@
 # vcgopkg
 Unofficial Community Project to help package a Go application for Veracode Static Analysis
 
-# IN DEVELOPMENT, DO NOT USE
-
 ## Usage
 
 Package the current working directory:
