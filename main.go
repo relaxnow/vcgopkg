@@ -215,15 +215,23 @@ func vendorDir(copyDir string) error {
 	cmd := exec.Command("go", "mod", "vendor")
 	cmd.Dir = copyDir
 	cmdOut, err := cmd.Output()
-	log.Debug(string(cmdOut))
+	log.WithFields(log.Fields{
+		"cmdOut": string(cmdOut),
+	}).Debug("Ran go mod vendor")
 	return err
 }
 
 // TODO: Find FirstParty
 func updateVeracodeJson(mainFile string, parentDir string, copyDir string) error {
-	veracodeJsonFile, err := NewVeracodeJsonFile(
-		copyDir + string(filepath.Separator) + "veracode.json",
-	)
+	log.Debug("Updating veracode.json")
+	file := copyDir + string(filepath.Separator) + "veracode.json"
+	err := CreateEmptyVeracodeJsonFileIfNotExists(file)
+
+	if err != nil {
+		return err
+	}
+
+	veracodeJsonFile, err := NewVeracodeJsonFile(file)
 
 	if err != nil {
 		return err

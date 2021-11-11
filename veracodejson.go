@@ -2,9 +2,20 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"os"
 )
+
+func CreateEmptyVeracodeJsonFileIfNotExists(file string) error {
+	_, err := os.Stat(file)
+	if errors.Is(err, os.ErrNotExist) {
+		os.WriteFile(file, []byte("{}"), os.FileMode(int(0666)))
+		return nil
+	} else {
+		return err
+	}
+}
 
 type VeracodeJson struct {
 	MainRoot    string
