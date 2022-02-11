@@ -24,6 +24,8 @@ import (
 // TODO: implement update check
 // TODO: implement help
 func main() {
+	log.Debug("Running version v0.0.7")
+
 	flag.Parse()
 	inputPath := flag.Arg(0)
 	packageDate := flag.Arg(1)
@@ -70,6 +72,8 @@ func main() {
 			panic("Error getting main file")
 		}
 	}
+
+	log.Debug("Ran version v0.0.7")
 }
 
 func getMainFiles(absPathStat os.FileInfo, absPath string) ([]string, error) {
