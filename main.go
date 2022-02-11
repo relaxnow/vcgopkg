@@ -9,7 +9,6 @@ import (
 	"go/token"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -98,10 +97,10 @@ func getMainFiles(absPathStat os.FileInfo, absPath string) ([]string, error) {
 				}
 
 				for _, pkg := range parsedPackages {
-					for _, file := range pkg.Files {
+					for filename, file := range pkg.Files {
 						for _, decl := range file.Decls {
 							if ast.FilterDecl(decl, func(name string) bool { return name == "main" }) {
-								mainFiles = append(mainFiles, path+string(filepath.Separator)+file.Name.Name+".go")
+								mainFiles = append(mainFiles, filepath.Dir(filename))
 							}
 						}
 					}
@@ -121,7 +120,7 @@ func getMainFiles(absPathStat os.FileInfo, absPath string) ([]string, error) {
 
 		for _, decl := range parsedFile.Decls {
 			if ast.FilterDecl(decl, func(name string) bool { return name == "main" }) {
-				mainFiles = append(mainFiles, absPath)
+				mainFiles = append(mainFiles, filepath.Dir(absPath))
 			}
 		}
 	} else {
@@ -237,7 +236,7 @@ func updateVeracodeJson(mainFile string, parentDir string, copyDir string) error
 		return err
 	}
 
-	mainFileRelativePath := strings.TrimPrefix(path.Base(mainFile), parentDir)
+	mainFileRelativePath := strings.TrimPrefix(mainFile, parentDir+string(filepath.Separator))
 	veracodeJsonFile.VeracodeJson.MainRoot = mainFileRelativePath
 
 	return veracodeJsonFile.WriteToFile()
