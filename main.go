@@ -23,6 +23,7 @@ import (
 // TODO: implement versioning
 // TODO: implement update check
 // TODO: implement help
+// TODO: package log inside zip files.
 func main() {
 	log.Debug("Running version v0.0.7")
 
@@ -258,7 +259,8 @@ func pkg(goModPath string, mainFile string, tempWorkDir string, parentDir string
 		packageDate = time.Now().Format("_20060102150405")
 	}
 	// Turn /path/to/module/cmd/main.go into cmd-main
-	relativeMainPath := mainFile[len(goModDir)+1 : len(mainFile)-3]
+	// TODO: use allow-list instead of deny-list
+	relativeMainPath := mainFile[len(goModDir)+1:]
 	cmdSlug := "_"
 	cmdSlug += strings.ReplaceAll(relativeMainPath, "\\", "--")
 	cmdSlug = strings.ReplaceAll(cmdSlug, "/", "--")
