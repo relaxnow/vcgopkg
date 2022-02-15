@@ -30,7 +30,9 @@ OR package a main.go file
 ```
 vcgopkg will then look for all main funcs and produce a .zip file for each, for example:
 
+```
 ~/Projects/my-go-project/veracode/my-go-project--cmd--20210909010101.zip
+```
 
 All .zip files from veracode can then be uploaded to Veracode for Static Analysis.
 
@@ -38,7 +40,7 @@ All .zip files from veracode can then be uploaded to Veracode for Static Analysi
 
 ### Download
 
-[Download vcgopkg-amd64.exe](https://github.com/relaxnow/vcgopkg/releases/download/v0.0.9/vcgopkg-amd64.exe).
+[Download vcgopkg-amd64.exe](https://github.com/relaxnow/vcgopkg/releases/download/v0.0.10/vcgopkg-amd64.exe).
 
 ### Usage
 
