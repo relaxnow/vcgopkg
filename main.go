@@ -175,7 +175,7 @@ func packageMainFile(mainFile string, packageDate string) error {
 	}
 
 	// TODO: Don't copy veracode dir, instead of copying it and then removing it
-	log.WithField("dir": copyDir + "/veracode").Debug("Removing veracode directory from copy")
+	log.WithField("dir", copyDir+"/veracode").Debug("Removing veracode directory from copy")
 	err = os.RemoveAll(copyDir + "/veracode")
 	if err != nil {
 		return err
