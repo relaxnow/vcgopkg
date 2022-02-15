@@ -24,6 +24,7 @@ import (
 // TODO: implement update check
 // TODO: implement help
 // TODO: package log inside zip files.
+// TODO: vendor only once per go module
 func main() {
 	log.Debug("Running version v0.0.9")
 
@@ -210,7 +211,7 @@ func vendorDir(copyDir string) error {
 	_, goPathErr := exec.LookPath("go")
 	log.Debug(goPathErr)
 	_, vendorPathErr := os.Stat(copyDir + "/vendor")
-	log.Debug(vendorPathErr)
+	log.WithField("stat error", vendorPathErr).Debug("Tested if vendor directory exists")
 
 	canFindVendor := vendorPathErr == nil
 	canFindGoExecutable := goPathErr == nil
@@ -223,6 +224,7 @@ func vendorDir(copyDir string) error {
 		return nil
 	}
 
+	log.Debug("Vendor folder did not exist, running go mod vendor, this may take a while")
 	cmd := exec.Command("go", "mod", "vendor")
 	cmd.Dir = copyDir
 	cmdOut, err := cmd.Output()
