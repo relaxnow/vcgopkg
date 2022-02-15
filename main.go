@@ -25,7 +25,7 @@ import (
 // TODO: implement help
 // TODO: package log inside zip files.
 func main() {
-	log.Debug("Running version v0.0.8")
+	log.Debug("Running version v0.0.9")
 
 	flag.Parse()
 	inputPath := flag.Arg(0)
@@ -74,7 +74,7 @@ func main() {
 		}
 	}
 
-	log.Debug("Ran version v0.0.8")
+	log.Debug("Ran version v0.0.9")
 }
 
 func getMainFiles(absPathStat os.FileInfo, absPath string) ([]string, error) {
