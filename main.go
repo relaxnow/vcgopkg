@@ -143,10 +143,10 @@ func packageMainFile(mainFile string, packageDate string) error {
 	parentDir := filepath.Dir(mainFile)
 	log.WithField("parentDir", parentDir).Debug("Starting looking up for go.mod")
 	for {
-		goModStat, _ := os.Stat(parentDir + string(filepath.Separator) + "go.mod")
+		goModStat, _ := os.Stat(parentDir + "/go.mod")
 
 		if goModStat != nil {
-			goModPath = parentDir + string(filepath.Separator) + "go.mod"
+			goModPath = parentDir + "/go.mod"
 			log.WithField("goModPath", goModPath).Debug("Found go.mod path")
 			break
 		}
@@ -166,7 +166,7 @@ func packageMainFile(mainFile string, packageDate string) error {
 	}
 	defer os.RemoveAll(tempWorkDir)
 
-	copyDir := tempWorkDir + string(filepath.Separator) + filepath.Base(filepath.Dir(goModPath))
+	copyDir := tempWorkDir + "/" + filepath.Base(filepath.Dir(goModPath))
 
 	log.WithFields(log.Fields{"from": parentDir, "to": copyDir}).Debug("Copying files")
 	err = copy.Copy(parentDir, copyDir)
@@ -200,7 +200,7 @@ func packageMainFile(mainFile string, packageDate string) error {
 
 	LogFiles(tempWorkDir, "Temporary workdir after packaging")
 	LogFiles(parentDir, "ParentDir")
-	LogFiles(parentDir+string(filepath.Separator)+"veracode", "Veracode Dir")
+	LogFiles(parentDir+"/veracode", "Veracode Dir")
 	return nil
 }
 
@@ -235,7 +235,7 @@ func vendorDir(copyDir string) error {
 // TODO: Find FirstParty
 func updateVeracodeJson(mainFile string, parentDir string, copyDir string) error {
 	log.Debug("Updating veracode.json")
-	file := copyDir + string(filepath.Separator) + "veracode.json"
+	file := copyDir + "/" + "veracode.json"
 	err := CreateEmptyVeracodeJsonFileIfNotExists(file)
 
 	if err != nil {
@@ -248,7 +248,7 @@ func updateVeracodeJson(mainFile string, parentDir string, copyDir string) error
 		return err
 	}
 
-	mainFileRelativePath := strings.TrimPrefix(mainFile, parentDir+string(filepath.Separator))
+	mainFileRelativePath := strings.TrimPrefix(mainFile, parentDir+"/")
 	veracodeJsonFile.VeracodeJson.MainRoot = mainFileRelativePath
 
 	return veracodeJsonFile.WriteToFile()
@@ -274,14 +274,14 @@ func pkg(goModPath string, mainFile string, tempWorkDir string, parentDir string
 	zipFile := baseDir + cmdSlug + packageDate + ".zip"
 	log.WithFields(log.Fields{
 		"baseDir": baseDir,
-		"zipFile": tempWorkDir + string(filepath.Separator) + zipFile,
+		"zipFile": tempWorkDir + "/" + zipFile,
 	}).Debug("Writing zip file")
-	err := ZipWriter(tempWorkDir, tempWorkDir+string(filepath.Separator)+zipFile)
+	err := ZipWriter(tempWorkDir, tempWorkDir+"/"+zipFile)
 	if err != nil {
 		return err
 	}
 
-	veracodeDir := parentDir + string(filepath.Separator) + "veracode"
+	veracodeDir := parentDir + "/" + "veracode"
 	_, err = os.Stat(veracodeDir)
 	if err != nil {
 		err = os.Mkdir(veracodeDir, 0700)
@@ -291,17 +291,14 @@ func pkg(goModPath string, mainFile string, tempWorkDir string, parentDir string
 		}
 	}
 
-	err = MoveFile(
-		tempWorkDir+string(filepath.Separator)+zipFile,
-		veracodeDir+string(filepath.Separator)+zipFile,
-	)
+	err = MoveFile(tempWorkDir+"/"+zipFile, veracodeDir+"/"+zipFile)
 	if err != nil {
 		return err
 	}
 
 	log.WithFields(log.Fields{
-		"from": tempWorkDir + string(filepath.Separator) + zipFile,
-		"to":   veracodeDir + string(filepath.Separator) + zipFile,
+		"from": tempWorkDir + "/" + zipFile,
+		"to":   veracodeDir + "/" + zipFile,
 	}).Debug("Rename zipfile")
 	return nil
 }
