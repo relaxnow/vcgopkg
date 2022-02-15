@@ -28,3 +28,7 @@ export GOPATH=`go env GOPATH` &&
 export PATH="$PATH:$GOPATH/bin" &&
 go install github.com/relaxnow/vcgopkg
 ```
+
+## Windows
+
+[Download vcgopkg-amd64.exe](https://github.com/relaxnow/vcgopkg/releases/download/v0.0.9/vcgopkg-amd64.exe) drop it into the project you want to package and double click.
