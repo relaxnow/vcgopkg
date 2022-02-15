@@ -8,7 +8,7 @@ Unofficial Community Project to help package a Go application for Veracode Stati
 On Linux with go get:
 ```
 export GOPATH=`go env GOPATH` &&
-export PATH="$PATH:$GOPATH/bin" &&
+export PATH="$GOPATH/bin:$PATH" &&
 go install github.com/relaxnow/vcgopkg
 ```
 
