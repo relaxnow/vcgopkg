@@ -8,17 +8,20 @@ Package the current working directory:
 ~/Projects/my-go-project# vcgopkg
 ```
 
-Package a directory:
+OR package a directory:
 ```
 ~/# vcgopkg Projects/my-go-project
 ```
 
-Package a main.go file
+OR package a main.go file
 ```
 ~/# vcgopkg Projects/my-go-project/cmd/main.go
 ```
-vcgopkg will then look for all main funcs and produce a .zip file for each, for example: **repo.zip**. 
-This can then be uploaded to Veracode for Static Analysis.
+vcgopkg will then look for all main funcs and produce a .zip file for each, for example:
+
+~/Projects/my-go-project/veracode/my-go-project--cmd--20210909010101.zip
+
+All .zip files from veracode can then be uploaded to Veracode for Static Analysis.
 
 ## Download
 
