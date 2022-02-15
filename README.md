@@ -1,7 +1,18 @@
 # vcgopkg
 Unofficial Community Project to help package a Go application for Veracode Static Analysis
 
-## Usage
+## Linux & OS X
+
+### Download
+
+On Linux with go get:
+```
+export GOPATH=`go env GOPATH` &&
+export PATH="$PATH:$GOPATH/bin" &&
+go install github.com/relaxnow/vcgopkg
+```
+
+### Usage
 
 Package the current working directory:
 ```
@@ -23,15 +34,32 @@ vcgopkg will then look for all main funcs and produce a .zip file for each, for 
 
 All .zip files from veracode can then be uploaded to Veracode for Static Analysis.
 
-## Download
-
-On Linux with go get:
-```
-export GOPATH=`go env GOPATH` &&
-export PATH="$PATH:$GOPATH/bin" &&
-go install github.com/relaxnow/vcgopkg
-```
-
 ## Windows
 
-[Download vcgopkg-amd64.exe](https://github.com/relaxnow/vcgopkg/releases/download/v0.0.9/vcgopkg-amd64.exe) drop it into the project you want to package and double click.
+### Download
+
+[Download vcgopkg-amd64.exe](https://github.com/relaxnow/vcgopkg/releases/download/v0.0.9/vcgopkg-amd64.exe).
+
+### Usage
+
+Drop the exe inside the go project and double click.
+
+OR package the current working directory with the command line:
+```
+C:\my-go-project> vcgopkg-amd64
+```
+
+OR package a directory:
+```
+C:\> vcgopkg-amd64 my-go-project
+```
+
+OR package a main.go file
+```
+C:\my-go-project> vcgopkg-amd64 my-go-project\cmd\main.go
+```
+vcgopkg will then look for all main funcs and produce a .zip file for each, for example:
+
+C:\my-go-project\veracode\my-go-project--cmd--20210909010101.zip
+
+All .zip files from veracode can then be uploaded to Veracode for Static Analysis.
