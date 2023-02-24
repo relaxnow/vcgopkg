@@ -29,7 +29,7 @@ import (
 // TODO: Detect and warn on incorrect Go version based on go mod
 // TODO: Better error handling when go mod vendor fails
 func main() {
-	log.Debug("Running version v0.0.11")
+	log.Debug("Running version v0.0.12")
 
 	flag.Parse()
 	inputPath := flag.Arg(0)
@@ -79,7 +79,7 @@ func main() {
 		}
 	}
 
-	log.Debug("Ran version v0.0.11")
+	log.Debug("Ran version v0.0.12")
 }
 
 func getMainFiles(absPathStat os.FileInfo, absPath string) ([]string, error) {
