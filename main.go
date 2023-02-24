@@ -273,8 +273,7 @@ func pkg(goModPath string, mainFile string, tempWorkDir string, parentDir string
 	}
 	// Turn /path/to/module/cmd/main.go into cmd-main
 	// TODO: use allow-list instead of deny-list
-	relativeMainPath := filepath.Dir(mainFile)
-	relativeMainPath = relativeMainPath[len(goModDir):]
+	relativeMainPath := strings.TrimSuffix(mainFile[len(goModDir)+1:], ".go")
 	cmdSlug := "_"
 	cmdSlug += strings.ReplaceAll(relativeMainPath, "\\", "--")
 	cmdSlug = strings.ReplaceAll(cmdSlug, "/", "--")
