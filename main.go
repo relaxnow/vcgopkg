@@ -25,8 +25,11 @@ import (
 // TODO: implement help
 // TODO: package log inside zip files.
 // TODO: vendor only once per go module
+// TODO: Detect and show go version
+// TODO: Detect and warn on incorrect Go version based on go mod
+// TODO: Better error handling when go mod vendor fails
 func main() {
-	log.Debug("Running version v0.0.9")
+	log.Debug("Running version v0.0.11")
 
 	flag.Parse()
 	inputPath := flag.Arg(0)
@@ -65,6 +68,7 @@ func main() {
 	log.WithField("mainFiles", mainFiles).Debug("Finished getting mainFiles")
 
 	for _, mainFile := range mainFiles {
+		log.WithField("MainFile", mainFile).Debug("Packaging for mainfile")
 		err = packageMainFile(mainFile, packageDate)
 		if err != nil {
 			log.WithFields(log.Fields{
@@ -75,7 +79,7 @@ func main() {
 		}
 	}
 
-	log.Debug("Ran version v0.0.9")
+	log.Debug("Ran version v0.0.11")
 }
 
 func getMainFiles(absPathStat os.FileInfo, absPath string) ([]string, error) {
@@ -106,7 +110,7 @@ func getMainFiles(absPathStat os.FileInfo, absPath string) ([]string, error) {
 					for filename, file := range pkg.Files {
 						for _, decl := range file.Decls {
 							if ast.FilterDecl(decl, func(name string) bool { return name == "main" }) {
-								mainFiles = append(mainFiles, filepath.Dir(filename))
+								mainFiles = append(mainFiles, filename)
 							}
 						}
 					}
@@ -126,7 +130,7 @@ func getMainFiles(absPathStat os.FileInfo, absPath string) ([]string, error) {
 
 		for _, decl := range parsedFile.Decls {
 			if ast.FilterDecl(decl, func(name string) bool { return name == "main" }) {
-				mainFiles = append(mainFiles, filepath.Dir(absPath))
+				mainFiles = append(mainFiles, absPath)
 			}
 		}
 	} else {
@@ -142,7 +146,7 @@ func getMainFiles(absPathStat os.FileInfo, absPath string) ([]string, error) {
 func packageMainFile(mainFile string, packageDate string) error {
 	goModPath := ""
 	parentDir := filepath.Dir(mainFile)
-	log.WithField("parentDir", parentDir).Debug("Starting looking up for go.mod")
+	log.WithField("parentDir", parentDir).Debug("Starting looking up for go.mod " + mainFile)
 	for {
 		goModStat, _ := os.Stat(parentDir + "/go.mod")
 
@@ -151,7 +155,7 @@ func packageMainFile(mainFile string, packageDate string) error {
 			log.WithField("goModPath", goModPath).Debug("Found go.mod path")
 			break
 		}
-		if parentDir != "" {
+		if parentDir != "/" {
 			parentDir = filepath.Dir(parentDir)
 			log.WithField("parentDir", parentDir).Debug("Trying parent directory")
 			continue
@@ -250,7 +254,7 @@ func updateVeracodeJson(mainFile string, parentDir string, copyDir string) error
 		return err
 	}
 
-	mainFileRelativePath := strings.TrimPrefix(mainFile, parentDir+"/")
+	mainFileRelativePath := strings.TrimPrefix(filepath.Dir(mainFile), parentDir+"/")
 	veracodeJsonFile.VeracodeJson.MainRoot = mainFileRelativePath
 
 	return veracodeJsonFile.WriteToFile()
