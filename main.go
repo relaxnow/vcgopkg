@@ -243,7 +243,7 @@ func vendorDir(copyDir string) error {
 // TODO: Find FirstParty
 func updateVeracodeJson(mainFile string, parentDir string, copyDir string) error {
 	log.Debug("Updating veracode.json")
-	file := copyDir + "/" + "veracode.json"
+	file := copyDir + string(os.PathSeparator) + "veracode.json"
 	err := CreateEmptyVeracodeJsonFileIfNotExists(file)
 
 	if err != nil {
@@ -256,7 +256,7 @@ func updateVeracodeJson(mainFile string, parentDir string, copyDir string) error
 		return err
 	}
 
-	mainFileRelativePath := strings.TrimPrefix(filepath.Dir(mainFile), parentDir+"/")
+	mainFileRelativePath := strings.TrimPrefix(filepath.Dir(mainFile), parentDir+string(os.PathSeparator))
 	veracodeJsonFile.VeracodeJson.MainRoot = mainFileRelativePath
 
 	return veracodeJsonFile.WriteToFile()
@@ -282,14 +282,14 @@ func pkg(goModPath string, mainFile string, tempWorkDir string, parentDir string
 	zipFile := baseDir + cmdSlug + packageDate + ".zip"
 	log.WithFields(log.Fields{
 		"baseDir": baseDir,
-		"zipFile": tempWorkDir + "/" + zipFile,
+		"zipFile": tempWorkDir + string(os.PathSeparator) + zipFile,
 	}).Debug("Writing zip file")
-	err := ZipWriter(tempWorkDir, tempWorkDir+"/"+zipFile)
+	err := ZipWriter(tempWorkDir, tempWorkDir+string(os.PathSeparator)+zipFile)
 	if err != nil {
 		return err
 	}
 
-	veracodeDir := parentDir + "/" + "veracode"
+	veracodeDir := parentDir + string(os.PathSeparator) + "veracode"
 	_, err = os.Stat(veracodeDir)
 	if err != nil {
 		err = os.Mkdir(veracodeDir, 0700)
@@ -299,14 +299,14 @@ func pkg(goModPath string, mainFile string, tempWorkDir string, parentDir string
 		}
 	}
 
-	err = MoveFile(tempWorkDir+"/"+zipFile, veracodeDir+"/"+zipFile)
+	err = MoveFile(tempWorkDir+string(os.PathSeparator)+zipFile, veracodeDir+string(os.PathSeparator)+zipFile)
 	if err != nil {
 		return err
 	}
 
 	log.WithFields(log.Fields{
-		"from": tempWorkDir + "/" + zipFile,
-		"to":   veracodeDir + "/" + zipFile,
+		"from": tempWorkDir + string(os.PathSeparator) + zipFile,
+		"to":   veracodeDir + string(os.PathSeparator) + zipFile,
 	}).Debug("Rename zipfile")
 	return nil
 }
