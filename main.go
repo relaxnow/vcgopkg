@@ -146,6 +146,7 @@ func getMainFiles(absPathStat os.FileInfo, absPath string) ([]string, error) {
 func packageMainFile(mainFile string, packageDate string) error {
 	goModPath := ""
 	parentDir := filepath.Dir(mainFile)
+	prevParentDir := ""
 	log.WithField("parentDir", parentDir).Debug("Starting looking up for go.mod " + mainFile)
 	for {
 		goModStat, _ := os.Stat(parentDir + "/go.mod")
@@ -155,7 +156,8 @@ func packageMainFile(mainFile string, packageDate string) error {
 			log.WithField("goModPath", goModPath).Debug("Found go.mod path")
 			break
 		}
-		if parentDir != "/" {
+		if parentDir != prevParentDir {
+			prevParentDir = parentDir
 			parentDir = filepath.Dir(parentDir)
 			log.WithField("parentDir", parentDir).Debug("Trying parent directory")
 			continue
