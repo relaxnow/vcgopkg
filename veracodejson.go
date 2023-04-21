@@ -18,9 +18,9 @@ func CreateEmptyVeracodeJsonFileIfNotExists(file string) error {
 }
 
 type VeracodeJson struct {
-	MainRoot    string
-	MainPkgName string
-	FirstParty  []string
+	MainRoot    string   `json:"MainRoot,omitempty"`
+	MainPkgName string   `json:"MainPkgName,omitempty"`
+	FirstParty  []string `json:"FirstParty,omitempty"`
 }
 
 func NewVeracodeJson() VeracodeJson {
