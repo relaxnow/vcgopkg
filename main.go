@@ -225,8 +225,8 @@ func vendorDir(copyDir string) error {
 	if !canFindVendor && !canFindGoExecutable {
 		log.Debug("Error getting stat of /vendor")
 		return fmt.Errorf("no vendor directory and unable to run go mod vendor")
-	} else if !canFindGoExecutable && canFindVendor {
-		log.Debug("No go but an existing vendor dir, chancing it")
+	} else if canFindVendor {
+		log.Debug("Found an existing vendor dir, using that")
 		return nil
 	}
 
