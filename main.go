@@ -233,7 +233,7 @@ func vendorDir(copyDir string) error {
 	log.Debug("Vendor folder did not exist, running go mod vendor, this may take a while")
 	cmd := exec.Command("go", "mod", "vendor")
 	cmd.Dir = copyDir
-	cmdOut, err := cmd.Output()
+	cmdOut, err := cmd.CombinedOutput()
 	log.WithFields(log.Fields{
 		"cmdOut": string(cmdOut),
 	}).Debug("Ran go mod vendor")
