@@ -9,7 +9,7 @@ On Linux with go get:
 ```
 export GOPATH=`go env GOPATH` &&
 export PATH="$GOPATH/bin:$PATH" &&
-go install github.com/relaxnow/vcgopkg
+go install github.com/relaxnow/vcgopkg@latest
 ```
 
 ### Usage
@@ -40,7 +40,7 @@ All .zip files from veracode can then be uploaded to Veracode for Static Analysi
 
 ### Download
 
-[Download vcgopkg-amd64.exe](https://github.com/relaxnow/vcgopkg/releases/download/v0.0.12/vcgopkg-amd64.exe).
+[Download vcgopkg-windows-amd64](https://github.com/relaxnow/vcgopkg/releases/download/v0.0.13/vcgopkg-windows-amd64.zip).
 
 ### Usage
 
@@ -48,17 +48,17 @@ Drop the exe inside the go project and double click.
 
 OR package the current working directory with the command line:
 ```
-C:\my-go-project> vcgopkg-amd64
+C:\my-go-project> vcgopkg
 ```
 
 OR package a directory:
 ```
-C:\> vcgopkg-amd64 my-go-project
+C:\> vcgopkg my-go-project
 ```
 
 OR package a main.go file
 ```
-C:\my-go-project> vcgopkg-amd64 my-go-project\cmd\main.go
+C:\my-go-project> vcgopkg my-go-project\cmd\main.go
 ```
 vcgopkg will then look for all main funcs and produce a .zip file for each, for example:
 
