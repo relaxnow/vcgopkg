@@ -79,7 +79,7 @@ func main() {
 		}
 	}
 
-	log.Debug("Ran version v0.0.13")
+	log.Debug("Ran version v0.0.14")
 }
 
 func getMainFiles(absPathStat os.FileInfo, absPath string) ([]string, error) {
@@ -256,7 +256,19 @@ func updateVeracodeJson(mainFile string, parentDir string, copyDir string) error
 		return err
 	}
 
-	mainFileRelativePath := strings.TrimPrefix(filepath.Dir(mainFile), parentDir+string(os.PathSeparator))
+	// Given a mainFile at /home/user/Desktop/project/cmd/server/main.go
+	// Remove the 'parentDir' of the zip, for example: /home/user/Desktop/project
+	// Should result in "cmd/server"
+	mainFileRelativePath := strings.TrimPrefix(filepath.Dir(mainFile), parentDir)
+	mainFileRelativePath = strings.TrimPrefix(mainFileRelativePath, string(os.PathSeparator))
+
+	log.WithFields(log.Fields{
+		"MainFile":    mainFile,
+		"MainFileDir": filepath.Dir(mainFile),
+		"prefix":      parentDir + string(os.PathSeparator),
+		"MainRoot":    mainFileRelativePath,
+	}).Debug("Setting MainRoot")
+
 	veracodeJsonFile.VeracodeJson.MainRoot = mainFileRelativePath
 
 	return veracodeJsonFile.WriteToFile()
@@ -267,8 +279,8 @@ func updateVeracodeJson(mainFile string, parentDir string, copyDir string) error
 // TODO: Test package with go loader
 func pkg(goModPath string, mainFile string, tempWorkDir string, parentDir string, packageDate string) error {
 	goModDir := filepath.Dir(goModPath)
-	log.Debug(goModDir)
-	log.Debug(mainFile)
+	log.Debug("Go.mod dir: " + goModDir)
+	log.Debug("main.go file:" + mainFile)
 	baseDir := filepath.Base(goModDir)
 	if packageDate == "" {
 		packageDate = time.Now().Format("_20060102150405")
