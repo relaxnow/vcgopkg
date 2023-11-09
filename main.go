@@ -31,7 +31,7 @@ import (
 // TODO: Detect and warn on incorrect Go version based on go mod
 // TODO: Better error handling when go mod vendor fails
 func main() {
-	log.Debug("Running version v0.0.15")
+	log.Debug("Running version v0.0.16")
 
 	flag.Parse()
 	inputPath := flag.Arg(0)
@@ -81,7 +81,7 @@ func main() {
 		}
 	}
 
-	log.Debug("Ran version v0.0.15")
+	log.Debug("Ran version v0.0.16")
 }
 
 func getMainFiles(absPathStat os.FileInfo, absPath string) ([]string, error) {
@@ -182,14 +182,14 @@ func packageMainFile(mainFile string, packageDate string) error {
 		Skip: func(srcinfo fs.FileInfo, src string, dest string) (bool, error) {
 			filename := filepath.Base(src)
 			if filename == ".git" {
-				fmt.Println("Skipping copying: " + src)
+				log.WithField("src", src).Debug("Skipping copying .git")
 				return true, nil
 			}
 			pathComponentsLinux := strings.Split(src, "/")
 			pathComponentsWindows := strings.Split(src, "\\")
 			isInVendor := slices.Contains(pathComponentsLinux, "vendor") || slices.Contains(pathComponentsWindows, "vendor")
 			if isInVendor && !srcinfo.IsDir() && !strings.HasSuffix(src, ".go") {
-				fmt.Println("Skipping copying: " + src)
+				log.WithField("src", src).Debug("Skipping copying non-go vendor file")
 				return true, nil
 			}
 			return false, nil
