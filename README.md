@@ -40,7 +40,7 @@ All .zip files from veracode can then be uploaded to Veracode for Static Analysi
 
 ### Download
 
-[Download vcgopkg-windows-amd64](https://github.com/relaxnow/vcgopkg/releases/download/v0.0.16/vcgopkg-windows-amd64.zip).
+[Download vcgopkg-windows-amd64](https://github.com/relaxnow/vcgopkg/releases/download/v0.0.17/vcgopkg-windows-amd64.zip).
 
 ### Usage
 
