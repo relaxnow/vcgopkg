@@ -188,9 +188,9 @@ func packageMainFile(mainFile string, packageDate string) error {
 			}
 			pathComponentsLinux := strings.Split(src, "/")
 			pathComponentsWindows := strings.Split(src, "\\")
-			isInVendor := slices.Contains(pathComponentsLinux, "veracode") || slices.Contains(pathComponentsWindows, "veracode")
-			if isInVendor && !srcinfo.IsDir() && !strings.HasSuffix(src, ".go") {
-				log.WithField("src", src).Debug("Skipping copying non-go vendor file")
+			isInVeracode := slices.Contains(pathComponentsLinux, "veracode") || slices.Contains(pathComponentsWindows, "veracode")
+			if isInVeracode {
+				log.WithField("src", src).Debug("Skipping copying veracode dir")
 				return true, nil
 			}
 			return false, nil
