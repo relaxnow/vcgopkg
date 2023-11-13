@@ -2,7 +2,6 @@ package main
 
 import (
 	"archive/zip"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -40,7 +39,7 @@ func ZipWriter(baseFolder string, outputZipFilePath string) error {
 func addFiles(w *zip.Writer, basePath, baseInZip string, ignoreFile string) error {
 	// Open the Directory
 	basePath = basePath + string(filepath.Separator)
-	files, err := ioutil.ReadDir(basePath)
+	files, err := os.ReadDir(basePath)
 	if err != nil {
 		return err
 	}
@@ -52,7 +51,7 @@ func addFiles(w *zip.Writer, basePath, baseInZip string, ignoreFile string) erro
 
 		log.Debug(basePath + file.Name())
 		if !file.IsDir() {
-			dat, err := ioutil.ReadFile(basePath + file.Name())
+			dat, err := os.ReadFile(basePath + file.Name())
 			if err != nil {
 				log.Error(err)
 				return err

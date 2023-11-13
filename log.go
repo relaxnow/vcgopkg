@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"os"
 
 	log "github.com/sirupsen/logrus"
@@ -17,7 +16,7 @@ func init() {
 }
 
 func LogFiles(dir string, msg string) {
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"os"
 )
 
@@ -36,7 +36,7 @@ func NewVeracodeJsonFromFile(file string) (VeracodeJson, error) {
 
 	defer veracodeJsonFile.Close()
 
-	byteValue, err := ioutil.ReadAll(veracodeJsonFile)
+	byteValue, err := io.ReadAll(veracodeJsonFile)
 
 	if err != nil {
 		return VeracodeJson{}, err
@@ -59,7 +59,7 @@ func (veracodeJson VeracodeJson) WriteToFile(file string) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(file, contents, 0644)
+	err = os.WriteFile(file, contents, 0644)
 
 	if err != nil {
 		return err
