@@ -20,7 +20,8 @@ import (
 	"github.com/otiai10/copy"
 )
 
-// TODO: Show version information
+const VERSION = "v0.0.16"
+
 // TODO: implement non-debug mode
 // TODO: implement versioning
 // TODO: implement update check
@@ -31,7 +32,7 @@ import (
 // TODO: Detect and warn on incorrect Go version based on go mod
 // TODO: Better error handling when go mod vendor fails
 func main() {
-	log.Debug("Running version v0.0.16")
+	log.Debug("Running version " + VERSION)
 
 	flag.Parse()
 	inputPath := flag.Arg(0)
@@ -81,7 +82,7 @@ func main() {
 		}
 	}
 
-	log.Debug("Ran version v0.0.16")
+	log.Debug("Ran version " + VERSION)
 }
 
 func getMainFiles(absPathStat os.FileInfo, absPath string) ([]string, error) {
