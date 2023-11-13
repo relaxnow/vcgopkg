@@ -11,7 +11,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"slices"
 	"strings"
 	"time"
 
@@ -186,16 +185,16 @@ func packageMainFile(mainFile string, packageDate string) error {
 				log.WithField("src", src).Debug("Skipping copying .git")
 				return true, nil
 			}
-			pathComponentsLinux := strings.Split(src, "/")
-			pathComponentsWindows := strings.Split(src, "\\")
-			isInVeracode := slices.Contains(pathComponentsLinux, "veracode") || slices.Contains(pathComponentsWindows, "veracode")
-			if isInVeracode {
-				log.WithField("src", src).Debug("Skipping copying veracode dir")
-				return true, nil
-			}
 			return false, nil
 		},
 	})
+	if err != nil {
+		return err
+	}
+
+	// TODO: Don't copy veracode dir, instead of copying it and then removing it
+	log.WithField("dir", copyDir+"/veracode").Debug("Removing veracode directory from copy")
+	err = os.RemoveAll(copyDir + "/veracode")
 	if err != nil {
 		return err
 	}
