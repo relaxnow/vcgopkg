@@ -20,7 +20,7 @@ import (
 	"github.com/otiai10/copy"
 )
 
-const VERSION = "v0.0.17"
+const VERSION = "v0.0.18"
 
 // TODO: implement non-debug mode
 // TODO: implement versioning
