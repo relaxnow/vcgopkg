@@ -16,7 +16,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.16
+        go-version: 1.21
 
     - name: Build
       run: go build -v ./...
@@ -25,4 +25,4 @@ jobs:
       run: go test -v ./...
 
     - name: Functional tests
-      run: cd test && ./test.sh
+      run: git clone https://github.com/relaxnow/vcgopkg-functional-test-suite.git test && cd test && ./test.sh
