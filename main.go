@@ -188,7 +188,7 @@ func packageMainFile(mainFile string, packageDate string) error {
 			}
 			pathComponentsLinux := strings.Split(src, "/")
 			pathComponentsWindows := strings.Split(src, "\\")
-			isInVendor := slices.Contains(pathComponentsLinux, "vendor") || slices.Contains(pathComponentsWindows, "vendor")
+			isInVendor := slices.Contains(pathComponentsLinux, "veracode") || slices.Contains(pathComponentsWindows, "veracode")
 			if isInVendor && !srcinfo.IsDir() && !strings.HasSuffix(src, ".go") {
 				log.WithField("src", src).Debug("Skipping copying non-go vendor file")
 				return true, nil
@@ -200,16 +200,14 @@ func packageMainFile(mainFile string, packageDate string) error {
 		return err
 	}
 
-	// TODO: Don't copy veracode dir, instead of copying it and then removing it
-	log.WithField("dir", copyDir+"/veracode").Debug("Removing veracode directory from copy")
-	err = os.RemoveAll(copyDir + "/veracode")
+	LogFiles(copyDir, "Copied Files")
+
+	err = vendorDir(copyDir)
 	if err != nil {
 		return err
 	}
 
-	LogFiles(copyDir, "Copied Files")
-
-	err = vendorDir(copyDir)
+	err = deleteFilesWithoutGoExtension(copyDir + string(os.PathSeparator) + "vendor")
 	if err != nil {
 		return err
 	}
@@ -234,7 +232,7 @@ func vendorDir(copyDir string) error {
 	log.Debug("Starting vendor")
 
 	_, goPathErr := exec.LookPath("go")
-	log.Debug(goPathErr)
+	log.WithField("goPathErr", goPathErr).Debug("Testing if Go is on the path")
 	_, vendorPathErr := os.Stat(copyDir + "/vendor")
 	log.WithField("stat error", vendorPathErr).Debug("Tested if vendor directory exists")
 
