@@ -206,16 +206,6 @@ func packageMainFile(mainFile string, packageDate string) error {
 		return err
 	}
 
-	_, vendorPathErr := os.Stat(copyDir + "/vendor")
-	hasVendorDir := vendorPathErr == nil
-
-	if hasVendorDir {
-		err = deleteFilesWithoutGoExtension(copyDir + string(os.PathSeparator) + "vendor")
-		if err != nil {
-			return err
-		}
-	}
-
 	err = updateVeracodeJson(mainFile, parentDir, copyDir)
 	if err != nil {
 		return err
@@ -274,6 +264,17 @@ func vendorDir(copyDir string) error {
 		newMicrosoftPath := filepath.Join(copyDir, "vendor/github.com/microsoft")
 
 		err = os.Rename(microsoftPath, newMicrosoftPath)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	_, vendorPathErr = os.Stat(copyDir + "/vendor")
+	hasVendorDir := vendorPathErr == nil
+
+	if hasVendorDir {
+		err = deleteFilesWithoutGoExtension(copyDir + string(os.PathSeparator) + "vendor")
 	}
 
 	return err
