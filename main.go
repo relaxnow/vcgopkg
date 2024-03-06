@@ -19,7 +19,7 @@ import (
 	"github.com/otiai10/copy"
 )
 
-const VERSION = "v0.0.20"
+const VERSION = "v0.0.21"
 
 // TODO: implement non-debug mode
 // TODO: implement versioning
@@ -206,9 +206,14 @@ func packageMainFile(mainFile string, packageDate string) error {
 		return err
 	}
 
-	err = deleteFilesWithoutGoExtension(copyDir + string(os.PathSeparator) + "vendor")
-	if err != nil {
-		return err
+	_, vendorPathErr := os.Stat(copyDir + "/vendor")
+	hasVendorDir := vendorPathErr == nil
+
+	if hasVendorDir {
+		err = deleteFilesWithoutGoExtension(copyDir + string(os.PathSeparator) + "vendor")
+		if err != nil {
+			return err
+		}
 	}
 
 	err = updateVeracodeJson(mainFile, parentDir, copyDir)
