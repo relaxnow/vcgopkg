@@ -253,6 +253,24 @@ func vendorDir(copyDir string) error {
 	log.WithFields(log.Fields{
 		"cmdOut": string(cmdOut),
 	}).Debug("Ran go mod vendor")
+
+	if err != nil {
+		return err
+	}
+
+	_, microsoftVendorLibPathErr := os.Stat(copyDir + "/vendor/github.com/Microsoft")
+	log.WithField("stat error", microsoftVendorLibPathErr).Debug("Tested if vendor directory exists again")
+
+	hasMicrosoftVendorLib := microsoftVendorLibPathErr == nil
+
+	if hasMicrosoftVendorLib {
+		// Hack to fix issues with case-sensitivity.
+		microsoftPath := filepath.Join(copyDir, "vendor/github.com/Microsoft")
+		newMicrosoftPath := filepath.Join(copyDir, "vendor/github.com/microsoft")
+
+		err = os.Rename(microsoftPath, newMicrosoftPath)
+	}
+
 	return err
 }
 
