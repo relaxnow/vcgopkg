@@ -71,7 +71,7 @@ func main() {
 
 	for _, mainFile := range mainFiles {
 		log.WithField("MainFile", mainFile).Debug("Packaging for mainfile")
-		err = packageMainFile(mainFile, packageDate)
+		err = packageMainFile(mainFile, packageDate, mainFiles)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"mainFile":      mainFile,
@@ -145,7 +145,7 @@ func getMainFiles(absPathStat os.FileInfo, absPath string) ([]string, error) {
 }
 
 // TODO: Make work with GOPATH
-func packageMainFile(mainFile string, packageDate string) error {
+func packageMainFile(mainFile string, packageDate string, mainFiles []string) error {
 	goModPath := ""
 	parentDir := filepath.Dir(mainFile)
 	prevParentDir := ""
@@ -180,6 +180,10 @@ func packageMainFile(mainFile string, packageDate string) error {
 	log.WithFields(log.Fields{"from": parentDir, "to": copyDir}).Debug("Copying files")
 	err = copy.Copy(parentDir, copyDir, copy.Options{
 		Skip: func(srcinfo fs.FileInfo, src string, dest string) (bool, error) {
+			if src != mainFile && strings.Contains(":"+strings.Join(mainFiles, ":")+":", ":"+src+":") {
+				log.WithField("src", src).Debug("Skipping copying other main file")
+				return true, nil
+			}
 			filename := filepath.Base(src)
 			if filename == ".git" {
 				log.WithField("src", src).Debug("Skipping copying .git")
