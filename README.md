@@ -1,4 +1,7 @@
 # vcgopkg
+
+# DEPRECATED, PLEASE USE THE OFFICIAL PACKAGER AT: https://docs.veracode.com/r/About_auto_packaging
+
 Unofficial Community Project to help package a Go application for Veracode Static Analysis
 
 ## Linux & OS X
